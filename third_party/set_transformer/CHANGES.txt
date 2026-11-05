@@ -1,0 +1,28 @@
+Set Transformer: how sc2bulk uses it
+====================================
+
+Upstream: Juho Lee, Yoonho Lee, Jungtaek Kim, Adam Kosiorek, Seungjin Choi, Yee Whye Teh, "Set
+Transformer: A Framework for Attention-based Permutation-Invariant Neural Networks", ICML 2019.
+https://github.com/juho-lee/set_transformer, commit 73432c640ac78140496d6738416c54d32c686d65
+(2020-02-11). License: MIT (LICENSE, kept). modules.py is byte-identical to that commit
+(tests/test_set_transformer_upstream.py).
+
+The model is the repository's classification configuration (main_pointcloud.py: ISAB x 2 ->
+Dropout -> PMA(1 seed) -> Dropout -> Linear), assembled from modules.py in
+src/sc2bulk/encoders/set_transformer.py with dim_input = the gene panel and one output (a logit).
+Changes from main_pointcloud.py, each made in sc2bulk's code:
+- one output logit with BCE (binary groups) instead of 40-way cross-entropy;
+- the shared sc2bulk harness trains it (bags, early stopping, checkpoints); its base optimizer
+  settings are the repository's (Adam lr 1e-3, batch 64);
+- bags of 500 cells (the repository's point clouds: 1,000 points), a data setting shared by every set
+  encoder (config/training.py FROZEN_NCELL; frozen §38); 1,000 is one point of the bag-size sweep;
+- the embedding is the PMA output (eval mode), before the last Dropout and Linear.
+- search options (frozen §40 D7), each a single change from the base above, built from the same
+  unedited modules.py: encoder_block "sab" (the paper's SAB encoder: SAB blocks instead of ISAB);
+  encoder_layers (the number of encoder blocks; the base's 2); decoder_sab (models.SetTransformer's
+  two SABs after the PMA, placed inside main_pointcloud's Dropouts, so the base's Dropouts are
+  kept). Under decoder_sab the embedding stays the PMA output; the SABs belong to the head. With one
+  PMA seed the SABs attend over a single element, so they act as residual feed-forward layers.
+- micro-batch gradient accumulation where a batch does not fit on the GPU (src/sc2bulk/harness.py
+  micro_batch, micro_batch_for, train; config/training.py MICRO_BATCH): the same update as one
+  full batch up to dropout draws and summation order (LayerNorm is per sample).

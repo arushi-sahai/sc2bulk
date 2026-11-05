@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sc2bulk"
+version = "0.1.0"
+description = "Benchmark of single-cell sample representations (pseudobulk, set encoders, scVI, foundation models) for phenotype transfer to bulk RNA-seq"
+requires-python = "==3.10.*"
+license = { file = "LICENSE" }
+# Pinned dependencies are in requirements.txt (main environment) and envs/ (the two
+# foundation-model environments, which install this package with --no-deps).
+
+[tool.setuptools]
+packages = ["sc2bulk", "sc2bulk.config", "sc2bulk.config.pairs", "sc2bulk.data", "sc2bulk.encoders", "cytoset", "set_transformer"]
+
+[tool.setuptools.package-data]
+"sc2bulk.data" = ["slim_barcodes/*.txt.gz"]
+"sc2bulk.config" = ["*.tsv", "signatures/*.tsv", "signatures/SHA256SUMS"]
+
+[tool.setuptools.package-dir]
+sc2bulk = "src/sc2bulk"
+cytoset = "third_party/cytoset"
+set_transformer = "third_party/set_transformer"

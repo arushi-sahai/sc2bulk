@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper."
+title: "A benchmark of learned single-cell sample representations against pseudobulk for predicting phenotypes in bulk RNA-seq cohorts"
+authors:
+  - family-names: "Sahai"
+    given-names: "Arushi"
+  - family-names: "Campillo"
+    given-names: "Beatriz"
+  - family-names: "Dhawka"
+    given-names: "Luvna"
+  - family-names: "Stanley"
+    given-names: "Natalie"
+license: GPL-2.0-only
+repository-code: "https://github.com/arushi-sahai/sc2bulk"

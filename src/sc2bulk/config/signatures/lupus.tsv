@@ -1,0 +1,44 @@
+# citation: Yao Y, Higgs BW, Morehouse C, de los Reyes M, Trigona W, Brohawn P, White W, Zhang J,
+#   White B, Coyle AJ, Kiener PA, Jallal B. Development of potential pharmacodynamic and diagnostic
+#   markers for anti-IFN-alpha monoclonal antibody trials in systemic lupus erythematosus.
+#   Hum Genomics Proteomics 2009;2009:374312.
+# DOI: 10.4061/2009/374312 (PMC2950308). This is the MedImmune group's own 2009 paper that defines
+#   the 21-gene panel. The companion Yao et al. 2009 Arthritis Rheum 60:1785 (10.1002/art.24557)
+#   and Higgs et al. 2011 Ann Rheum Dis 70:2029 (10.1136/ard.2011.150326) are not open access
+#   (ard.bmj.com returned 403); their tables were NOT checked against this list.
+# table: Table 4 ('21 candidate PD markers in WB of 95 SLE patients'), column 'Gene symbol'.
+# raw file: raw/PMC2950308_fullTextXML.xml (Europe PMC JATS full text; Table 4 is element id='tab4')
+# URL: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2950308/fullTextXML
+# retrieved: 2026-10-05
+# SHA-256 (raw file): eded87bdfc5ef2796d77be2eb6f328be47ceedc6d9d5e1433188b146dc3e55b5
+# species: human. All 21 up in SLE whole blood (log2 fc 1.16-3.77).
+# scoring rule defined by the source: per patient, the MEDIAN fold change of the 21 genes vs the
+#   healthy-donor baseline (TaqMan; baseline = 24 healthy donors scaled to 1). Thresholds on that
+#   scale: high > 5.53, moderate 1.91-5.53, weak < 1.91 (scaled from Affymetrix top-25 cut-offs
+#   10 and 4). Section 3 / Figure 8 of the paper.
+# outdated symbols as printed: DNAPTP6 (now SPATS2L).
+# expected: 21 up. Matches.
+# dropped: none.
+# counts written: 21 up / 0 down (21 genes)
+gene	direction	source_symbol
+IFI27	up	IFI27
+IFI6	up	IFI6
+RSAD2	up	RSAD2
+IFI44	up	IFI44
+IFI44L	up	IFI44L
+USP18	up	USP18
+LY6E	up	LY6E
+OAS1	up	OAS1
+SIGLEC1	up	SIGLEC1
+ISG15	up	ISG15
+IFIT1	up	IFIT1
+OAS3	up	OAS3
+HERC5	up	HERC5
+MX1	up	MX1
+LAMP3	up	LAMP3
+EPSTI1	up	EPSTI1
+IFIT3	up	IFIT3
+OAS2	up	OAS2
+RTP4	up	RTP4
+PLSCR1	up	PLSCR1
+DNAPTP6	up	DNAPTP6

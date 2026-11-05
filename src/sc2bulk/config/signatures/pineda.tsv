@@ -1,0 +1,80 @@
+# citation: Lederer CW, Torrisi A, Pantelidou M, Santama N, Cavallaro S. Pathways and genes
+#   differentially expressed in the motor cortex of patients with sporadic amyotrophic lateral
+#   sclerosis. BMC Genomics 2007;8:26. GEO GSE4595.
+# DOI: 10.1186/1471-2164-8-26 (PMC1796866)
+# table/figure: Figure 3 (cluster matrix; 57 genes on 61 probes, corrected P < 0.05; direction
+#   from the printed fold change, diseased vs control). Transcribed by hand from the figure image
+#   (600x692 px; every symbol and fold change legible after upscaling). Text (Results) states
+#   '40 genes showing down-regulation and 17 up-regulation'. Tables 3-4 list subsets with ratios
+#   that agree with the figure (e.g. AQP1 2.52, SNAP25 0.31, GNAS 0.48).
+# raw files: raw/1471-2164-8-26-3.jpg (Fig. 3), raw/PMC1796866_fullTextXML.xml (text, caption)
+# URL: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC1796866/supplementaryFiles (figure);
+#   https://www.ebi.ac.uk/europepmc/webservices/rest/PMC1796866/fullTextXML (text)
+# retrieved: 2026-10-05
+# SHA-256 (1471-2164-8-26-3.jpg): f1b06b84e7517bef044f181aa105bd045d539268932a4edef32adc61a1db165b
+# SHA-256 (PMC1796866_fullTextXML.xml): b9451f00a1e385b1a887f947fa2a1d89d49e0cc2fa4f2cc7483f544b39addcfa
+# species: human. Symbols are UniGene-era (2006).
+# multi-probe genes (same direction, one row each here): MT2A x3 (2.43/2.50/2.27), NEFL x2
+#   (0.32/0.49), OLFM1 x2 (0.43/0.47).
+# outdated symbols as printed: DSCR1L1 (now RCAN2), NEF3 (now NEFM), ATP5A1 (now ATP5F1A).
+# expected: 17 up / 40 down. Matches.
+# dropped (listed in both directions): none; GNAS appears once (down).
+# counts written: 17 up / 40 down (57 genes)
+gene	direction	source_symbol
+MDH1	down	MDH1
+UCHL1	down	UCHL1
+NSF	down	NSF
+MLLT11	down	MLLT11
+BEX1	down	BEX1
+VSNL1	down	VSNL1
+SYT13	down	SYT13
+NEFL	down	NEFL
+CHGB	down	CHGB
+KCNC2	down	KCNC2
+PCSK1	down	PCSK1
+OLFM1	down	OLFM1
+YWHAH	down	YWHAH
+CAP2	down	CAP2
+NAP1L5	down	NAP1L5
+SNAP25	down	SNAP25
+PNMA2	down	PNMA2
+ENC1	down	ENC1
+ATP1A3	down	ATP1A3
+RTN1	down	RTN1
+NPTN	down	NPTN
+SLC12A5	down	SLC12A5
+GABRA1	down	GABRA1
+ATP6V1A	down	ATP6V1A
+EIF4A2	down	EIF4A2
+GNAS	down	GNAS
+TUBB2A	down	TUBB2A
+CHN1	down	CHN1
+ATP5A1	down	ATP5A1
+RTN4	down	RTN4
+SCG5	down	SCG5
+CYCS	down	CYCS
+NDUFA4	down	NDUFA4
+NRGN	down	NRGN
+NEF3	down	NEF3
+PCP4	down	PCP4
+PVALB	down	PVALB
+EGR1	down	EGR1
+NEFH	down	NEFH
+DSCR1L1	down	DSCR1L1
+MT2A	up	MT2A
+MT1E	up	MT1E
+MT1G	up	MT1G
+MT1B	up	MT1B
+MT1L	up	MT1L
+MT1X	up	MT1X
+MT1M	up	MT1M
+CEBPD	up	CEBPD
+S100A8	up	S100A8
+TUBB6	up	TUBB6
+ANXA2	up	ANXA2
+EDN1	up	EDN1
+ANGPTL4	up	ANGPTL4
+AQP1	up	AQP1
+SLC14A1	up	SLC14A1
+SERPINA3	up	SERPINA3
+FCGBP	up	FCGBP

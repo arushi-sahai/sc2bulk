@@ -1,0 +1,53 @@
+CytoSet: changes made by sc2bulk
+================================
+
+This is the change notice required by the GNU General Public License, version 2,
+section 2(a), for the CytoSet code in this directory.
+
+Upstream: CytoSet, Haidong Yi and Natalie Stanley, "CytoSet: Predicting clinical outcomes
+via set-modeling of cytometry data", ACM-BCB 2021. https://github.com/CompCy-lab/cytoset,
+commit 830f5a29d7cbab9fe39338e12c800a569ebaed84 (2021-08-04). License: GPL-2.0 (LICENSE).
+
+The upstream files in this directory are byte-identical to that commit, and
+tests/test_cytoset_upstream.py checks them against UPSTREAM_SHA256.txt. Every change
+below is made in sc2bulk's own code (src/sc2bulk/encoders/cytoset.py and the modules it names),
+never by editing these files. Each entry gives what changed, why, and where.
+
+Files added here by sc2bulk: __init__.py (makes the directory importable), this file,
+UPSTREAM_SHA256.txt. Upstream files not copied: README.md, assets/, scripts/, test.py,
+logger.py, meters.py, third_party/, .circleci/, the other model configs and checkpoints.
+
+Changes
+-------
+Model (src/sc2bulk/encoders/cytoset.py):
+1. Logits: the model is used as enc -> output pooling -> dec without the final sigmoid; training uses
+   BCE on logits (numerically equivalent to upstream's sigmoid + BCE).
+2. Added in this study: gated attention pooling (Ilse et al. 2018) at either site. At the inner site,
+   PermEqui2's forward (Gamma x - Lambda pool(x)) is reimplemented with attention as the pool, its
+   scores computed on Gamma x (attention dimension h/2); at the output site, on the block output.
+3. Added in this study: abundance weighting, a depth-weighted mean (log1p library size, normalized
+   within the bag) as the output pooling.
+The base and the original pooling options (mean, max, sum) use upstream's own layers unchanged.
+
+Training (src/sc2bulk/harness.py, src/sc2bulk/bags.py; frozen decisions §10-§11, §35):
+4. Training bags are redrawn each epoch (upstream draws them once), class-balanced and spread evenly
+   over each class's samples as upstream does.
+5. Validation is whole held-out samples (donor-grouped), not upstream's held-out cells of the
+   training samples; a fixed set of validation bags, equal per validation sample.
+6. Early stopping and checkpoint selection on class-balanced validation BCE every epoch (upstream:
+   the best by validation AUC every 5 epochs), with a 10-epoch burn-in before any checkpoint is kept
+   or patience counted, the same for every encoder.
+   No checkpoint is kept before 50 optimizer steps either (config/training.py MIN_STEPS), the same
+   for every encoder.
+7. Input: log-CP10k on a 5,000-gene panel (upstream: arcsinh-transformed cytometry), with three
+   normalization levels (none = the base, population, per-sample), the latter two capped at +-10.
+8. Test-time embedding: the mean over 10 random bags of the training bag size per sample (upstream:
+   one random bag); one-profile inputs (bulk, pseudobulk) as 1-cell bags.
+9. Added in this study (training additions): the pseudobulk gene scaler, the population-distance
+   feature and the age-similarity loss (specs/harness_spec.md).
+10. Bags of 500 cells (upstream's --ncell default: 200), a data setting shared by every set encoder
+   (config/training.py FROZEN_NCELL; frozen §38). Upstream's 200 is one point of the bag-size sweep.
+11. Micro-batches: where a configured batch of bags does not fit in GPU memory, it is split into
+   micro-batches whose gradients accumulate to exactly that batch before each optimizer step
+   (src/sc2bulk/harness.py micro_batch, micro_batch_for and train; config/training.py MICRO_BATCH).
+   The update equals upstream's up to dropout draws and summation order.
