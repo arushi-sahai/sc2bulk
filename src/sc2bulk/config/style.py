@@ -112,6 +112,7 @@ PANEL_LABEL = {"size": 10, "weight": "bold"}
 WIDTH_MM = {"single": 85, "double": 170}
 MAX_HEIGHT_MM = 225
 DPI = 300
+RASTER_DPI = 600                       # rasterized artists inside the PDF and SVG (dense scatters), sharp when enlarged
 FILE_FORMAT = "pdf"
 PDF_FONTTYPE = 42
 MAX_FIGURE_BYTES = 10 * 2**20

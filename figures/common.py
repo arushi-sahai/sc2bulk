@@ -7,7 +7,7 @@ content hash and its record's commit, tag and blinded flag). Before a figure is 
 unblinded in a real run (manifest.assert_unblinded) or blinded with this run's index (label-free inputs: either), made
 from a clean tree (tagged in full-run mode), and current (their recorded code hash equals the tree's).
 
-Outputs, in <labelled outputs>/figures/<item>/: <item>.pdf (the submission file), <item>.png (300-dpi preview), <item>.svg, one
+Outputs, in <labelled outputs>/figures/<item>/: <item>.pdf (the submission file), <item>.png (300-dpi preview), <item>.svg (rasterized artists in the PDF and SVG at 600 dpi), one
 <item><panel>.csv per panel, one <item><panel>.png per drawn panel (the panel cropped from the composite, for review),
 sources.json. In a blinded run that is outputs/blinded_<seed>/figures/, and nothing there
 leaves the server except the PNG previews.
@@ -818,8 +818,9 @@ def save(fig, item, script, panel_axes, rows):
     out = directory(item)
     name = stem(item)
     with plt.rc_context({"svg.hashsalt": "sc2bulk"}):   # fixed SVG ids: byte-reproducible, as the PDF and PNG
-        for suffix, metadata in (("pdf", {"CreationDate": None, "Producer": None}), ("png", {"Software": None}), ("svg", {"Date": None})):
-            write_bytes(out / f"{name}.{suffix}", lambda p: fig.savefig(p, format=suffix, dpi=S.DPI, metadata=metadata))
+        for suffix, metadata, dpi in (("pdf", {"CreationDate": None, "Producer": None}, S.RASTER_DPI), ("png", {"Software": None}, S.DPI),
+                                      ("svg", {"Date": None}, S.RASTER_DPI)):
+            write_bytes(out / f"{name}.{suffix}", lambda p: fig.savefig(p, format=suffix, dpi=dpi, metadata=metadata))
     renderer = fig.canvas.get_renderer()
     letters = [t for t in fig.findobj(Text) if t.get_gid() == "panel_label"]
     for letter in letters:

@@ -43,7 +43,7 @@
   footer .refs span { white-space: nowrap; }
   footer p { font-size: 16pt; line-height: 1.3; text-wrap: balance; }
   footer p + p { margin-top: 0.25cm; }
-  footer .qr { margin: 0 auto; width: 4.2cm; height: 4.2cm; border: 0.08cm dashed var(--navy); display: flex; align-items: center; justify-content: center; font-size: 16pt; color: var(--navy); text-align: center; }
+  footer .qr { margin: 0 auto; width: 4.2cm; height: 4.2cm; display: block; }
   footer .qr-label { font-size: 13pt; margin-top: 0.2cm; text-align: center; color: var(--navy); white-space: nowrap; }
 </style>
 </head>
@@ -122,7 +122,7 @@
     <p><b>Contact:</b> Arushi Sahai, arushis@cs.unc.edu</p>
   </div>
   <div>
-    <div class="qr">QR code</div>
+    <img class="qr" src="assets/qr-poster.svg" alt="QR code linking to the poster PDF">
     <div class="qr-label">github.com/arushi-sahai/sc2bulk</div>
   </div>
 </footer>
