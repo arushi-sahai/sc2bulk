@@ -45,17 +45,24 @@ def row(pair, side, groups, samples, cells) -> dict:
     return dict(zip(F.TABLE1["columns"], values))
 
 
-def rows(pair) -> list:
+def group_counts(pair) -> tuple:
+    """Units per class (0, 1) on each side: single-cell from stage 02's kept samples, bulk from statistics.CLASS_COUNTS
+    (Fig 1D reads them here too)."""
     single = common.single_cell_samples(pair)
     per_unit = single.assign(unit=units(single, pair)).groupby("unit")["group"]
     assert per_unit.nunique().eq(1).all(), f"{pair}: a unit in both groups"
-    single_groups = per_unit.first().value_counts()
+    counts = per_unit.first().value_counts()
+    return (int(counts[0]), int(counts[1])), tuple(int(n) for n in np.sum(statistics.CLASS_COUNTS[pair], axis=0))
+
+
+def rows(pair) -> list:
+    single = common.single_cell_samples(pair)
+    single_groups, bulk_groups = group_counts(pair)
     cells = single["cells_after_qc"]
     single_row = row(pair, "single_cell", single_groups, samples_cell(single),
                      f"{number(cells.median())} ({number(cells.min())}–{number(cells.max())})")
     bulk = common.bulk_samples(pair)
-    bulk_groups = np.sum(statistics.CLASS_COUNTS[pair], axis=0)
-    assert units(bulk, pair).nunique() == bulk_groups.sum(), f"{pair}: bulk units differ from CLASS_COUNTS"
+    assert units(bulk, pair).nunique() == sum(bulk_groups), f"{pair}: bulk units differ from CLASS_COUNTS"
     return [single_row, row(pair, "bulk", bulk_groups, samples_cell(bulk), DASH)]
 
 

@@ -24,8 +24,9 @@ def test_registry():
     assert set(F.PANELS) == {i for i, spec in F.ITEMS.items() if spec["script"] in make_all.SCRIPTS}
     for item, panels in F.BLINDED_PANELS.items():
         assert set(panels) <= set(F.PANELS[item]), item
-    assert {p for p, _ in F.NOT_APPLICABLE["Fig 6C"]} == {"hammond"} and ("hammond", "deconvolution_clr") in F.NOT_APPLICABLE["Fig 2A"]
-    assert set(F.FIG3A["columns"]) == {"unaligned_stacked", "combat"} and F.FIG6B_PAIR in PAIR_ORDER
+    assert {p for p, _ in F.NOT_APPLICABLE["Fig 6C"]} == {"hammond"}
+    assert set(F.FIG3A["columns"]) <= set(F.FIG3_CONDITIONS) <= set(F.S13_CONDITIONS) and F.FIG6B_PAIR in PAIR_ORDER
+    assert set(F.ALIGNMENT_TICKS) == set(F.S13_CONDITIONS) and set(F.FIG3_KEYS) <= set(F.S13_KEYS["cells"])
     assert F.LAYOUT_PENDING <= set(F.PANELS)
     assert set(F.PANEL_SENSITIVE) <= {f"{item}{p}" for item in F.QC_FIGURES.values() for p in F.PANELS[item]}
 

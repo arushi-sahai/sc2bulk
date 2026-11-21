@@ -117,6 +117,7 @@ DYNAMIC_IMPORTS = {"pipeline/02_preprocess.py", "pipeline/02b_all_available.py",
                    "pipeline/07d_embed_all_available.py",   # 07d runs stage 07's functions (runpy; codehash.extra)
                    "pipeline/03b_attribution_splits.py",   # 03b runs stage 03's split() (runpy; codehash.extra)
                    "pipeline/09_alignment.py",   # 09 reads stage 08's features (runpy; codehash.extra)
+                   "pipeline/09c_geometry.py",   # 09c runs stages 09 and 08's functions (runpy; codehash.extra)
                    "pipeline/12_simulation.py",   # 12 runs stage 06's helpers (runpy; codehash.extra)
                    "pipeline/12a_properties.py",   # 12a reads stage 08's features (runpy; codehash.extra)
                    "pipeline/08b_secondary.py",   # 08b runs stage 08's functions (runpy; codehash.extra)

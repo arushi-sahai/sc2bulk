@@ -13,10 +13,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import to_rgb
-from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
 
 import common
 import style
+from sc2bulk.config import settings
 from sc2bulk.config import style as S
 
 MM = 1 / 25.4
@@ -24,6 +25,7 @@ INK = "#333333"                        # outlines, arrows and text
 GREY = "#D9D9D9"                       # neutral fills (Fig 1A is greys only)
 GREY_DARK = "#9E9E9E"
 LIGHT = "#F2F2F2"                      # discarded heads
+SECONDARY, SECONDARY_FILL = "#707070", "#B5B5B5"   # Fig 1A's pseudobulk row: legible, lighter than the samples
 BODY, SMALL = 8, 7                     # pt at print size
 LINE = 0.6                             # pt
 SEED = 3                               # the shading of the grey input matrices
@@ -57,8 +59,9 @@ def arrow(ax, start, end, color=INK, dashed=False, lw=LINE):
                                  shrinkA=0, shrinkB=0))
 
 
-def matrix(ax, x, y, ncol, nrow, cell, fill, edge="white", shades=None):
-    """A gene x cell grid; shades (nrow x ncol, 0-1) vary the fill's lightness, as BioRender's heat matrices do."""
+def matrix(ax, x, y, ncol, nrow, cell, fill, edge="white", shades=None, outline=INK):
+    """A cell x gene grid (cells are rows, genes columns); shades (nrow x ncol, 0-1) vary the fill's lightness, as
+    BioRender's heat matrices do."""
     for i in range(nrow):
         for j in range(ncol):
             alpha = 1.0 if shades is None else 0.35 + 0.65 * shades[i, j]
@@ -68,7 +71,7 @@ def matrix(ax, x, y, ncol, nrow, cell, fill, edge="white", shades=None):
         ax.plot([x + k * cell] * 2, [y, y + nrow * cell], color=edge, linewidth=0.5)
     for k in range(nrow + 1):
         ax.plot([x, x + ncol * cell], [y + k * cell] * 2, color=edge, linewidth=0.5)
-    ax.add_patch(Rectangle((x, y), ncol * cell, nrow * cell, facecolor="none", edgecolor=INK, linewidth=0.4))
+    ax.add_patch(Rectangle((x, y), ncol * cell, nrow * cell, facecolor="none", edgecolor=outline, linewidth=0.4))
 
 
 def bar(ax, x, y, w, h, fill, edge=INK):
@@ -79,51 +82,73 @@ def dot(ax, x, y, filled, r=0.9):
     ax.add_patch(Circle((x, y), r, facecolor=INK if filled else "white", edgecolor=INK, linewidth=0.5))
 
 
+B_ROW_TOP, B_ROW_PITCH = 39.3, 10.6   # Fig 1B's rows: the first row's centre (mm from the bottom) and the pitch
+GENES, CELLS = 9, 6                    # the drawn sample: a cells x genes matrix (Fig 1A and each row of Fig 1B)
+REPRESENTATION = 5                     # the drawn sample representation's length
+
+
+def sample_shades():
+    return np.random.default_rng(SEED).random((CELLS, GENES))
+
+
 def fig1a(ax):
-    """The task: a sample's cells become one vector; a ridge readout trained on single-cell samples is applied unchanged
-    to bulk samples, already one profile each, and scored by bulk AUROC (170 x 45 mm, greys only)."""
+    """The task: a single-cell sample (cells x genes), its pseudobulk (the cells summed after sequencing) and a bulk
+    sample (summed before sequencing) on one gene axis; one model turns each sample into a sample representation; a
+    ridge readout trained on single-cell samples is applied unchanged to bulk samples and scored by bulk AUROC
+    (170 x 45 mm, greys only)."""
     mm_axes(ax, 170, 45)
-    rng = np.random.default_rng(SEED)
-    # training row: a stack of samples, each a cells x genes matrix
-    text(ax, 1, 38.5, "Training:", ha="left", weight="bold")
-    text(ax, 1, 35, "single-cell samples", ha="left")
-    text(ax, 1, 26, "each sample is a\nmatrix of cells", size=SMALL, ha="left")
-    for k in (2, 1):
-        bar(ax, 29 + 1.4 * k, 26 + 1.4 * k, 14, 12, "white")
-    matrix(ax, 29, 26, 7, 6, 2.0, GREY_DARK, shades=rng.random((6, 7)))
-    text(ax, 27.3, 32, "genes", size=SMALL, rotation=90)
-    text(ax, 36, 24.3, "cells", size=SMALL)
-    dot(ax, 47, 40.3, False)
-    dot(ax, 49.4, 40.3, True)
-    arrow(ax, (49, 32), (61, 32))
-    text(ax, 55, 34.3, "compress", size=SMALL)
-    # testing row: bulk samples, already one profile each
-    text(ax, 1, 16, "Testing:", ha="left", weight="bold")
-    text(ax, 1, 12.5, "bulk samples", ha="left")
-    text(ax, 1, 4.5, "already one profile\nper sample", size=SMALL, ha="left")
-    for i, filled in enumerate((False, True, False, True)):
-        bar(ax, 30.5 + 3.4 * i, 2.5, 1.6, 12, GREY_DARK)
-        dot(ax, 31.3 + 3.4 * i, 17, filled, r=0.75)
-    arrow(ax, (44, 9), (61, 9))   # from the bulk profiles to the representation
-    # the shared representation
-    box(ax, 61, 3, 30, 38, radius=2)
-    text(ax, 76, 36, "Sample\nrepresentation")
-    for i, shade in enumerate(("#3A3A3A", "#666666", "#8C8C8C", "#B3B3B3", "#E6E6E6")):
-        bar(ax, 66.5 + 3.8 * i, 24.5, 3.8, 3.8, shade)
-    text(ax, 76, 19.5, "one vector\nper sample", size=SMALL)
-    text(ax, 76, 9, "pseudobulk, or\na learned model", size=SMALL)
-    # the ridge readout: trained on single-cell samples, applied unchanged to bulk
-    arrow(ax, (91, 22), (100, 22))
-    box(ax, 100, 15, 18, 14)
-    text(ax, 109, 22, "Ridge\nreadout")
-    text(ax, 109, 43, "labels", size=SMALL)
-    arrow(ax, (109, 41.3), (109, 29))
-    text(ax, 107.5, 35, "trained on\nsingle-cell\nsamples", size=SMALL, ha="right")
-    text(ax, 109, 9.5, "applied unchanged\nto bulk samples", size=SMALL)
-    # the predicted sample label, scored by bulk AUROC
+    shades = sample_shades()
+    profile = shades.mean(axis=0, keepdims=True)
+    profile = (profile - profile.min()) / (profile.max() - profile.min())
+    x0, cell = 33, 2.0                 # the gene columns, shared by the three rows
+    mid = x0 + GENES * cell / 2
+    right = x0 + GENES * cell
+    text(ax, mid, 43.6, f"{settings.PANEL_SIZE:,} genes →", size=SMALL)
+    # the single-cell sample: cells x genes
+    matrix(ax, x0, 29.5, GENES, CELLS, cell, GREY_DARK, shades=shades)
+    text(ax, x0 - 1.6, 35.5, "cells", size=SMALL, rotation=90)
+    text(ax, 1, 35.5, "Single-cell sample", ha="left", weight="bold")
+    # its pseudobulk, faded: it explains bulk and is not a step of the task
+    arrow(ax, (mid, 29), (mid, 23.4), color=SECONDARY)
+    text(ax, mid + 1.2, 26.2, "Σ", size=SMALL, color=SECONDARY, ha="left")
+    matrix(ax, x0, 21, GENES, 1, cell, SECONDARY_FILL, shades=profile, outline=SECONDARY)
+    text(ax, 1, 22, "Pseudobulk", ha="left", weight="bold", color=SECONDARY)
+    text(ax, 1, 17.9, "sum over cells,\nafter sequencing", size=SMALL, ha="left", color=SECONDARY)
+    ax.plot([1, right], [14.2, 14.2], color=INK, linewidth=LINE)
+    # the bulk sample
+    matrix(ax, x0, 9, GENES, 1, cell, GREY_DARK, shades=np.clip(profile + 0.1 * np.random.default_rng(SEED + 1)
+                                                                .standard_normal(profile.shape), 0, 1))
+    text(ax, 1, 10, "Bulk sample", ha="left", weight="bold")
+    text(ax, 1, 5.9, "sum over cells,\nbefore sequencing", size=SMALL, ha="left")
+    # one model, shared by both samples: wide in, narrow out
+    arrow(ax, (right + 0.6, 35.5), (55, 35.5))
+    arrow(ax, (right + 0.6, 10), (55, 10))
+    ax.add_patch(Polygon([(55, 5), (55, 41), (66, 29), (66, 15)], closed=True, facecolor=GREY, edgecolor=INK,
+                         linewidth=LINE, joinstyle="round"))
+    text(ax, 60.5, 23.3, "Model", weight="bold")
+    text(ax, 60.5, 20.3, "(b)", size=SMALL)
+    # the two sample representations
+    rep = np.linspace(1, 0, REPRESENTATION)
+    for y, order, label, va, dy in ((27, rep, "single-cell sample\nrepresentation", "bottom", 2.0),
+                                    (17, rep[::-1], "bulk sample\nrepresentation", "top", -2.0)):
+        arrow(ax, (66, y), (69.5, y))
+        matrix(ax, 70, y - 1, REPRESENTATION, 1, 2.0, GREY_DARK, shades=order[None, :])
+        text(ax, 75, y + dy, label, size=SMALL, va=va)
+    # the ridge readout: trained on the single-cell representations, applied unchanged to the bulk ones
+    arrow(ax, (80.5, 27), (100, 27))
+    text(ax, 90, 27.8, "train", size=SMALL, va="bottom")
+    arrow(ax, (80.5, 17), (100, 17))
+    text(ax, 89.9, 17.8, "apply unchanged", size=SMALL, va="bottom")
+    box(ax, 100, 14, 18, 16)
+    text(ax, 109, 22, "Ridge\nclassifier")
+    text(ax, 109, 43.3, "single-cell labels", size=SMALL)
+    dot(ax, 106.8, 39.7, False)
+    dot(ax, 111.2, 39.7, True)
+    arrow(ax, (109, 38.3), (109, 30))
+    # the predicted bulk label, scored by bulk AUROC
     arrow(ax, (118, 22), (124, 22))
     box(ax, 124, 13, 26, 18)
-    text(ax, 137, 34, "Sample label")
+    text(ax, 137, 34, "Predicted bulk label")
     dot(ax, 127.5, 25.8, False)
     text(ax, 130, 25.8, "control / younger", size=SMALL, ha="left")
     dot(ax, 127.5, 18.2, True)
@@ -137,37 +162,39 @@ def fig1a(ax):
 
 
 def fig1b(ax):
-    """How each family turns a sample's cells into one vector (88 x 52 mm, family colors)."""
+    """How each family turns a single-cell sample into a sample representation; every row draws the same matrix, model
+    box and representation (88 x 52 mm, family colors)."""
     mm_axes(ax, 88, 52)
-    rows = [  # family, family label, model box (None: the sum), note under the box, output
-        ("pseudobulk", "Pseudobulk", None, "sum over cells", "pseudobulk profile"),
-        ("set_encoder", "Supervised set\nencoders", "CytoSet, Set\nTransformer, ScRAT", "trained on single-cell labels",
-         "set embedding"),
-        ("generative", "Unsupervised\ngenerative model", "scVI\n(per cell)", "fit without labels", "mean embedding"),
-        ("foundation_model", "Frozen foundation\nmodels", "Geneformer, scGPT\n(per cell)", "pretrained",
-         "mean embedding"),
+    shades = sample_shades()
+    rep = np.linspace(1, 0, REPRESENTATION)[None, :]
+    cell = 1.4                         # Fig 1A's matrix, scaled
+    x0 = 27.5
+    mid = x0 + GENES * cell / 2
+    box_x, box_w = x0 + GENES * cell + 3.5, 25
+    out_x = box_x + box_w + 3.5
+    out_cell = 2.6
+    out_mid = out_x + REPRESENTATION * out_cell / 2
+    text(ax, mid, 50.8, "Single-cell sample", weight="bold")
+    text(ax, mid, 45.3, f"{settings.PANEL_SIZE:,} genes →", size=SMALL)
+    text(ax, out_mid, 49.3, "Sample\nrepresentation", weight="bold")
+    rows = [  # family, family label, model box
+        ("pseudobulk", "Pseudobulk", "Σ sum"),
+        ("set_encoder", "Supervised set\nencoders", "CytoSet, Set\nTransformer, ScRAT"),
+        ("generative", "Unsupervised\ngenerative model", "scVI"),
+        ("foundation_model", "Frozen foundation\nmodels", "Geneformer, scGPT"),
     ]
-    for r, (key, family, model, note, output) in enumerate(rows):
+    for r, (key, family, model) in enumerate(rows):
         color = S.FAMILY_COLORS[key]
-        y = 44.5 - 12 * r              # row centre
+        y = B_ROW_TOP - B_ROW_PITCH * r   # row centre
         text(ax, 0.5, y, family, size=BODY, color=color, ha="left", weight="bold")
-        matrix(ax, 27, y - 3.5, 4, 4, 1.75, color)
+        matrix(ax, x0, y - CELLS * cell / 2, GENES, CELLS, cell, color, shades=shades)
         if r == 0:
-            text(ax, 30.5, y + 5, "cells", size=SMALL)
-            text(ax, 25.6, y, "genes", size=SMALL, rotation=90)
-        arrow(ax, (34.5, y), (38, y))
-        if model is None:
-            ax.add_patch(Circle((41.5, y), 3.3, facecolor=color, edgecolor=INK, linewidth=LINE))
-            text(ax, 41.5, y, "Σ", size=10, color=on(color), weight="bold")
-            text(ax, 41.5, y - 5.6, note, size=SMALL)
-            arrow(ax, (44.8, y), (65.5, y))
-        else:
-            box(ax, 38, y - 4, 25, 8, fill=color)
-            text(ax, 50.5, y, model, size=SMALL, color=on(color))
-            text(ax, 50.5, y - 5.6, note, size=SMALL)
-            arrow(ax, (63, y), (65.5, y))
-        bar(ax, 66, y - 1.2, 21.5, 2.4, color)
-        text(ax, 76.75, y - 4.2, output, size=SMALL)
+            text(ax, x0 - 1.4, y, "cells", size=SMALL, rotation=90)
+        arrow(ax, (x0 + GENES * cell + 0.5, y), (box_x, y))
+        box(ax, box_x, y - 4, box_w, 8, fill=color)
+        text(ax, box_x + box_w / 2, y, model, size=SMALL, color="white")   # white: the best worst-case contrast on the four fills
+        arrow(ax, (box_x + box_w, y), (out_x - 0.5, y))
+        matrix(ax, out_x, y - out_cell / 2, REPRESENTATION, 1, out_cell, color, shades=rep)
 
 
 def encoder_row(ax, steps, color, heading, input_label, gap=4.5, bar_w=12, readout_w=14, y=6, h=9):

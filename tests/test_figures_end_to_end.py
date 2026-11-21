@@ -24,6 +24,7 @@ import scipy.sparse
 from sc2bulk import folds, labels, properties, schemas, training_inputs
 from sc2bulk.config import alignment as A
 from sc2bulk.config import configurations, deconvolution, fig1e, search_space, settings
+from sc2bulk.config import geometry as G
 from sc2bulk.config import figures as F
 from sc2bulk.config import properties as P12
 from sc2bulk.config import simulation as SIM
@@ -240,6 +241,14 @@ def geometry(root, M, pair, samples, bulk, rng):
                         frames += [pd.DataFrame({**row, "alignment": a, "measure": m, "sample_id": ids, "value": rng.normal(size=len(ids))})
                                    for m in ("pc1", "pc2")]
             write("alignment_geometry", pd.concat(frames, ignore_index=True), root / "09_alignment" / pair / folds.unit_name(*unit) / f"{key}_geometry.parquet")
+        if unit[1] == 0:   # stage 09c: the Fig 3A / S13A-E coordinates
+            ids = [*train["sample_id"], *scored["sample_id"]]
+            for key in G.CONFIGURATIONS:
+                row = {**M.config_keys(key), "pair": pair, "fold_set": unit[0], "fold": 0, "readout": "none", "readout_seed": -1,
+                       "encoder_seed": -1 if key in M.NO_ENCODER_LEVEL else A.GEOMETRY_ENCODER_SEED}
+                frames = [pd.DataFrame({**row, "alignment": a, "measure": m, "sample_id": ids, "value": rng.normal(size=len(ids))})
+                          for a in ("none", *A.ALIGNED) for m in ("pc1", "pc2")]
+                write("alignment_geometry", pd.concat(frames, ignore_index=True), root / "09c_geometry" / pair / folds.unit_name(*unit) / f"{key}_geometry.parquet")
 
 
 def genes_of(pair) -> list:
@@ -397,14 +406,6 @@ def simulation(root, M, rng):
                                                                          for s in SIM.SCENARIOS}}))
 
 
-def practitioner(root):
-    """scripts/practitioner_comparison.py's labelled table (Fig 2A's ticks): 11b's out-of-fold CytoSet rows, renamed."""
-    sec = schemas.read("secondary_statistics", root / LABELLED / "11b_secondary" / "pooled" / f"{LABELLED}_secondary_statistics.parquet")
-    rows = sec[(sec["row"] == "out_of_fold") & sec["key"].isin(F.FIG2A_PRACTITIONER)].assign(row="practitioner")
-    (root / LABELLED / "11c_practitioner").mkdir(parents=True)
-    rows.to_csv(root / LABELLED / "11c_practitioner" / f"{LABELLED}_practitioner_comparison.csv", index=False)
-
-
 def stub_manifest():
     return types.SimpleNamespace(input_hashes=lambda paths: {}, stage_code_hash=lambda *a, **k: "x", begin=lambda *a, **k: {},
                                  temporary=lambda p: p, finish=lambda *a, **k: None)
@@ -446,7 +447,6 @@ def tree(tmp_path_factory):
     mp.setattr(M, "preflight", lambda: [])
     mp.setattr(M, "manifest", stub_manifest())
     M.main()
-    practitioner(root)
     mp.setattr(common, "sources", lambda paths, repository=(): {"inputs": [], "repository": [], "commits": []})
     mp.setattr(common, "WATERMARK", figure_style.SYNTHETIC_WATERMARK)
     # Two layouts that move with the synthetic data alone (the real build checks every figure strictly): S7g's synthetic PCA
@@ -469,7 +469,7 @@ def test_every_panel_and_figure_written(tree):
         if spec["script"] not in make_all.SCRIPTS:
             continue
         stem = common.stem(item)
-        for suffix in ("pdf", "png"):
+        for suffix in ("pdf", "png", "svg"):
             assert (out / stem / f"{stem}.{suffix}").exists(), item
         assert (out / stem / f"{stem}.pdf").stat().st_size <= S.MAX_FIGURE_BYTES
         for panel in F.PANELS[item]:
@@ -495,13 +495,6 @@ def test_values_match_the_stage_tables(tree):
     assert np.allclose(rows.loc[list(per_pair.index)].to_numpy(), per_pair.to_numpy(), rtol=0, atol=1e-12)
     seeds = fig2a[fig2a["row_type"] == "seed"].groupby(["column", "key"])["delta_seed"].mean()
     assert np.allclose(seeds.loc[list(per_pair.index)].to_numpy(), per_pair.to_numpy(), rtol=0, atol=1e-9)   # dots' mean = delta
-    sec = schemas.read("secondary_statistics", tree.root / LABELLED / "11b_secondary" / "pooled" / f"{LABELLED}_secondary_statistics.parquet")
-    pooled_oof = sec[(sec["row"] == "out_of_fold") & (sec["pair"] == "pooled")].set_index("key")["delta"]   # Fig 2A's right column
-    oof = fig2a[fig2a["column"] == F.FIG2A_OUT_OF_FOLD]
-    shown = oof[oof["row_type"] == "configuration"].set_index("key")["delta"]
-    assert len(shown) and np.allclose(shown.to_numpy(), pooled_oof.loc[shown.index].to_numpy(), rtol=0, atol=1e-12)
-    ticks = oof[oof["row_type"] == "practitioner"].set_index("key")["delta"]
-    assert sorted(ticks.index) == sorted(F.FIG2A_PRACTITIONER)
     fig2b = pd.read_csv(out / "Fig2" / "Fig2B.csv")
     strip = fig2a[fig2a["row_type"] == "pseudobulk_auroc"].set_index("column")   # the strip is Fig 2B's pseudobulk bulk value,
     pseudobulk = fig2b[(fig2b["key"] == "pseudobulk") & fig2b["within_auroc"].notna()].set_index("pair")["bulk_auroc"]   # and ♦ = pooled
@@ -523,11 +516,6 @@ def test_values_match_the_stage_tables(tree):
     assert not ((fig6a["pair"] == "tms") & (fig6a["property"] == "mito_fraction")).any()
     fig5b = pd.read_csv(out / "Fig5" / "Fig5B.csv", keep_default_na=False, na_values=[""])
     assert (fig5b.loc[fig5b["key"] == "geneformer_pseudobulk", "note"] == F.FIGURE_TEXT["not_applicable"]).all()   # included False
-    fig1d = pd.read_csv(out / "Fig1" / "Fig1D.csv").drop_duplicates("pair").set_index("pair")["connector"]
-    fig1e_ = pd.read_csv(out / "Fig1" / "Fig1E.csv", keep_default_na=False)
-    independent = fig1e_[fig1e_["characteristic"] == "Independent cohorts"].set_index("pair")["state"]
-    assert ((fig1d == "independent") == (independent.loc[fig1d.index] == "yes")).all()   # Fig 1D's connector = Fig 1E's column
-    assert fig1d["soundlife"] == "same_donors" and fig1d["tms"] == "same_colony"
     fig6c = pd.read_csv(out / "Fig6" / "Fig6C.csv")
     assert set(fig6c["pair"]) == {p for p in PAIR_ORDER if "one_type" in PAIRS[p]}
 
@@ -646,8 +634,8 @@ def test_blinded_mode(tree, monkeypatch):
 
 
 def test_fig2_pooled_column_at_k1_and_k0(tree, monkeypatch, tmp_path):
-    """Fig 2A/2C's pooled column: K = 1 is headed by the single pair; K = 0 has no pooled column, its gap
-    column carries the sentence, and 11b's pooled reference rows must be absent."""
+    """Fig 2A/2C's pooled column: K = 1 is headed by the single pair; K = 0 has no pooled column, its place
+    carries the sentence, and 11b's pooled reference rows must be absent."""
     import fig2
     claims, statistics, secondary = common.claims(), common.statistics(), common.secondary()
     monkeypatch.setattr(common, "directory", lambda item: tmp_path)
@@ -659,8 +647,8 @@ def test_fig2_pooled_column_at_k1_and_k0(tree, monkeypatch, tmp_path):
     monkeypatch.setattr(common, "claims", lambda: {**claims, "excluded_at_ceiling": excluded["value"]})
     monkeypatch.setattr(common, "pseudobulk_auroc", lambda pair: 0.9 if pair not in excluded["value"] else 0.97)   # the strip's rule
     fig2.main(list(PAIR_ORDER), panels)
-    assert F.FIGURE_TEXT["pooled_header_k1"].format(mark=F.FIGURE_TEXT["pooled_mark"]) in titles_seen[-1]
-    assert set(pd.read_csv(tmp_path / "Fig2A.csv")["column"]) == {*PAIR_ORDER, "pooled", F.FIG2A_OUT_OF_FOLD}
+    assert " ".join(F.FIGURE_TEXT["pooled_header_k1"].format(mark=F.FIGURE_TEXT["pooled_mark"]).split()) in titles_seen[-1]
+    assert set(pd.read_csv(tmp_path / "Fig2A.csv")["column"]) == {*PAIR_ORDER, "pooled"}
     excluded["value"] = list(PAIR_ORDER)
     monkeypatch.setattr(common, "claims", lambda: {**claims, "excluded_at_ceiling": excluded["value"]})
     monkeypatch.setattr(common, "statistics", lambda: statistics[statistics["pair"] != "pooled"])

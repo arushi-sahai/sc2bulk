@@ -127,7 +127,8 @@ STAGE_NAMES = {"00_soundlife_slims": "Sound Life subsampling", "01_download": "D
                "06_train": "Training", "07_embed": "Foundation-model embedding",
                "07d_embed_all_available": "Embedding of all cells",
                "08_readout": "Readout", "08a_alpha_edges": "Readout penalty check", "08b_secondary": "Secondary readouts",
-               "09_alignment": "Alignment", "10_attribution": "Gene attribution", "10c_concordance": "Gene concordance",
+               "09_alignment": "Alignment", "09c_geometry": "Alignment coordinates",
+               "10_attribution": "Gene attribution", "10c_concordance": "Gene concordance",
                "11_statistics": "Primary statistics", "11b_secondary": "Secondary statistics", "12_simulation": "Simulation",
                "12a_properties": "Sample properties"}
 CHECK_NAMES = {"stability_cells": "stability across cell subsamples", "stability_readout_seeds": "stability across readout seeds",
@@ -474,7 +475,7 @@ def characteristics_table() -> pd.DataFrame:
     rows = []
     for column in fig1e.FIG1E_COLUMNS:
         row = {"Characteristic": column, "Definition and threshold": HAND["definitions"][column],
-               "In Fig 1e": "yes" if column in fig1e.FIG1E_MAIN else "no"}
+               "In Fig 1e": "yes" if column in F.FIG1E_PANEL else "no"}
         for pair in PAIR_ORDER:
             table = common.read_csv("04d_characteristics", pair, "characteristics.csv", keep_default_na=False)
             r = table.set_index("column").loc[column]
@@ -490,6 +491,8 @@ def annotation(note) -> str:
         note = note.replace(f"{level}: ", "")
     for variable, name in BATCH_NAMES.items():
         note = re.sub(rf"^{variable}: ", f"{name}, ", note)
+    for old, new in F.ANNOTATION_TEXT.items():
+        note = note.replace(old, new)
     return note.replace("_", " ")
 
 

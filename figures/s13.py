@@ -1,25 +1,21 @@
 """Fig. S13: the modality gap in every dataset pair.
 
-A-E: Fig 3A's 2 x 2 for the other pairs, in pair order (fold 0 of each primary fold set: human blood, aging's crossfit_0);
-F: Fig 3B and 3C for the pseudobulk-input configurations (and pseudobulk), with the unaligned stacked scaler as a
-   fifth, light column (silhouette and bulk AUROC)."""
+A-E: Fig 3A's 3 x 4 for the other pairs, in pair order (fold 0 of each primary fold set: human blood, aging's crossfit_0);
+F-I: Fig 3B and 3C for every configuration under the five conditions of config/figures.S13_CONDITIONS, split by input
+   (pseudobulk the first group in each): F silhouette and G bulk AUROC for the configurations on cells, H and I for the
+   pseudobulk-input configurations."""
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
 import common
 import fig3
-import plots
 import style
-from sc2bulk.config import configurations
 from sc2bulk.config import figures as F
-from sc2bulk.config import style as S
 
 FIGURE = "Fig. S13"
 READS_BULK_LABELS = True
 READS_SCORES = True
-F_LETTER_MM = 10.2                     # f's letter's left edge (mm), in line with a's and d's
-STACKED_OFFSET = 0.42                  # the light unaligned-stacked mark, right of each configuration's four columns
+LETTER = {"left_mm": 10.2, "above_pt": 4}   # f-i's letters: in line with a's and d's, clear of the top tick label
+KEY_X, KEY_Y = 0.70, 0.71             # the keys' top-left corner (figure fraction), in the empty slot right of d and e
 
 
 def gap(pair, letter):
@@ -31,45 +27,30 @@ def gap(pair, letter):
     return draw
 
 
-def panel_f(fig, cell, pairs):
-    keys = ["pseudobulk", *[k for k in F.S13F_KEYS if k in common.alternatives()]]
-    grid = cell.subgridspec(2, 1, hspace=0.25)
-    frames = []
-    for row, (values_of, ylabel) in enumerate(((fig3.silhouettes, F.TEXT["silhouette"]), (fig3.aurocs, F.TEXT["bulk_auroc"]))):
-        axes = plots.columns(fig, grid[row], len(pairs))
-        for ax, pair in zip(axes, pairs):
-            frame = values_of(pair, keys, (*configurations.ALIGNMENTS, "unaligned_stacked"))
-            values = {(r.key, r.alignment): r.value for r in frame.itertuples()}
-            limits = (-np.inf, np.inf) if row == 0 else F.AUROC_RANGE
-            plots.offset_columns(ax, values, keys, limits)
-            for j, key in enumerate(keys):
-                plots.point(ax, j + STACKED_OFFSET, values[(key, "unaligned_stacked")], limits, {**style.marker(key), "alpha": S.SEED_DOT_ALPHA},
-                            orientation="y")
-            if row == 1:
-                fig3.auroc_lines(ax, frame)
-            else:
-                ax.set_title(common.pair_title(pair))
-            frames.append(frame.assign(measure="silhouette" if row == 0 else "bulk_auroc"))
-        plots.share_y(axes, None if row == 0 else F.AUROC_RANGE)
-        axes[0].set_ylabel(ylabel.replace(" ", "\n", 1))
-        if row == 0:
-            style.panel_label(axes[0], "F", at_left=True, left_mm=F_LETTER_MM)
-            first = frames[0][frames[0]["key"] == "pseudobulk"]   # the first pair's pseudobulk dots, named in place
-            plots.alignment_callout(axes[0], [(STACKED_OFFSET if r.alignment == "unaligned_stacked" else S.ALIGNMENT_X_OFFSET[r.alignment], r.value,
-                                               F.ALIGNMENT_TICKS[r.alignment]) for r in first.itertuples()], step=0.125)   # five names: more room
-    common.panel_csv(pd.concat(frames, ignore_index=True), FIGURE, "F")
+def keys(group) -> list:
+    return [k for k in F.S13_KEYS[group] if k in common.kept()]
+
+
+def offsets(group, auroc, letter):
+    def draw(fig, cell, pairs):
+        fig3.offset_panel(fig, cell, pairs, fig3.aurocs if auroc else fig3.silhouettes, keys(group), F.S13_CONDITIONS, letter, FIGURE,
+                          auroc, titles=letter == "F", letter=LETTER)
+    return draw
 
 
 def legend(fig):
-    """a-e's key (data colors) at the top, as in every figure; f's key (family hues) under f."""
-    style.legend_strip(fig, [], ("side_single_cell", "side_bulk", "group_0", "group_1"), ncol=4)
-    style.legend_strip(fig, ["pseudobulk", *[k for k in F.S13F_KEYS if k in common.alternatives()]], ("pseudobulk_unaligned", "chance"),
-                       y=0.003, ncol=3, loc="lower center")
+    """a-e's key (data colors) and f-i's key (family hues), one over the other in the slot right of d and e."""
+    style.legend_strip(fig, [], ("side_single_cell", "side_bulk", "group_0", "group_1"), x=KEY_X, y=KEY_Y, ncol=2, loc="upper left")
+    style.legend_strip(fig, list(dict.fromkeys(keys("cells") + keys("pseudobulk"))), ("pseudobulk_within_assay",), x=KEY_X,
+                       y=KEY_Y - 0.04, ncol=1, loc="upper left")
 
 
 def main(pairs, panels):
     functions = {letter: gap(pair, letter) for letter, pair in zip("ABCDE", F.FIG13_OTHER_PAIRS)}
+    functions.update({"F": offsets("cells", False, "F"), "G": offsets("cells", True, "G"), "H": offsets("pseudobulk", False, "H"),
+                      "I": offsets("pseudobulk", True, "I")})
     with plt.rc_context(F.TEXT_RC):
-        common.draw(FIGURE, {**functions, "F": panel_f}, pairs, panels, __file__, rows=[("A", "B", "C"), (None, "D", "E", None), ("F",)],
-                    widths=[(1, 1, 1), (0.5, 1, 1, 0.5), None], wspace=(0.35, 0.35, 0.35), ratios=(1, 1, 1.2), legend=legend, top_mm=22,
-                    hspace=(0.5, 0.38), left=0.087, bottom=0.05)
+        common.draw(FIGURE, functions, pairs, panels, __file__, rows=[("A", "B", "C"), ("D", "E", None), ("F",), ("G",), ("H",), ("I",)],
+                    widths=[(1, 1, 1), (1, 1, 1), None, None, None, None], wspace=(0.35, 0.35, 0, 0, 0, 0),
+                    ratios=(1.4, 1.4, 1.0, 0.45, 0.75, 0.45), top_mm=17, hspace=(0.9, 0.6, 0.25, 0.3, 0.25), left=0.087, bottom=0.03,
+                    legend=legend)

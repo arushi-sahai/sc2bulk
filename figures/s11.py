@@ -46,7 +46,7 @@ def panel_a(fig, cell, pairs):
             for g in (0, 1):   # group by x-position (left 0, right 1), never by fill (hollow = pseudobulk input)
                 v = score[group == g].to_numpy()
                 ax.plot(x + (g - 0.5) * S.GROUP_X_OFFSET + (np.arange(len(v)) % 3 - 1) * 0.06, v,
-                        **{**style.marker(key, S.MARKER_SIZE * S.SEED_DOT_FACTOR * 1.3), "alpha": 0.6}, rasterized=True)
+                        **{**style.marker(key, S.MARKER_SIZE * S.SEED_DOT_FACTOR * 1.3, mean=False), "alpha": 0.6}, rasterized=True)
             frames.append(pd.DataFrame({"pair": pair, "key": key, "sample_id": score.index, "group": group.to_numpy(), "score": score.to_numpy()}))
         ax.set_xticks([])   # configurations by marker (the key), in key order
         ax.set_xlim(-0.6, len(common.kept()) - 0.4)

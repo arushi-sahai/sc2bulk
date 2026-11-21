@@ -81,7 +81,7 @@ EXCLUDED = {"00_soundlife_slims.py": "writes RAW before stage 01",
 NAMERS = {"src/sc2bulk/config/settings.py", "src/sc2bulk/manifest.py", "src/sc2bulk/paths.py",
           "src/sc2bulk/config/training.py"}
 SWITCH = re.compile(r"\bBLINDED\b|\bLABELLED_OUTPUTS\b|SC2BULK_PERMUTE_BULK_LABELS")
-# The post hoc practitioner comparison (Methods) runs after stage 11b: it reads the label-bearing outputs and
+# The practitioner comparison (Methods) runs after stage 11b: it reads the label-bearing outputs and
 # writes its own, with a manifest, under the label-bearing outputs folder
 POST_HOC = {"scripts/practitioner_comparison.py"}
 THREAD_VARIABLES = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS")

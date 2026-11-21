@@ -23,6 +23,14 @@ def columns(fig, cell, n, wspace=0.15, gap=None):
     return [fig.add_subplot(grid[0, i if i < gap else i + 1]) for i in range(n)]
 
 
+def auroc_ticks(ax, step=0.1):
+    """An AUROC axis from chance (Figs 2b, 3c and S13's AUROC panels): ticks every step from 0.5 to 1, the bottom one,
+    0.5, labeled instead of a chance line."""
+    ticks = np.arange(0.5, 1 + step / 2, step)
+    decimals = len(f"{step:g}".split(".")[1])
+    ax.set_yticks(ticks, [f"{t:.{decimals}f}" for t in ticks])
+
+
 def share_y(axes, limits=None):
     """Pairs as columns on one y scale (limits, or the widest the axes drew): tick labels on the first column only."""
     low, high = limits or (min(ax.get_ylim()[0] for ax in axes), max(ax.get_ylim()[1] for ax in axes))
@@ -136,29 +144,37 @@ def slope(ax, rows, limits=None, spread=0.0):
     ax.set_xticklabels([F.TEXT["within"], F.TEXT["bulk"]])
 
 
-CALLOUT_X, CALLOUT_TOP, CALLOUT_STEP = 0.6, 0.93, 0.1   # alignment_callout: the names' left edge (data) and rows (axes fraction)
+CALLOUT_X, CALLOUT_TOP = 0.45, 0.97      # alignment_callout: the names' left edge (data) and first row (axes fraction)
 
 
-def offset_columns(ax, values, keys, limits=(-np.inf, np.inf)):
-    """Fig 3B/C's format: each configuration's group (x = its position in keys; its marker names it), the alignments as
-    dodged dots within it in ALIGNMENT_X_OFFSET's order (named by alignment_ticks), no connectors; dotted dividers
-    between groups. values: {(key, alignment): value}; limits: the y range, a value past it an arrowhead at the edge."""
-    alignments = list(S.ALIGNMENT_X_OFFSET)
+def condition_x(i, j, n) -> float:
+    """The x of the j-th of n conditions in the i-th configuration's group (offset_columns)."""
+    return i + dodge(j, n, S.ALIGNMENT_SPREAD)
+
+
+def offset_columns(ax, values, keys, alignments, limits=(-np.inf, np.inf)):
+    """Fig 3b/c's format: each configuration's group (x = its position in keys; its marker names it), the alignments
+    as dodged dots within it in their given order (named by alignment_callout), joined by a thin line in the
+    configuration's color; dotted dividers between groups. values: {(key, alignment): value}; limits: the y range, a
+    value past it an arrowhead at the edge (the line runs to the arrowhead)."""
     for i, key in enumerate(keys):
-        for a in alignments:
-            point(ax, i + S.ALIGNMENT_X_OFFSET[a], values[(key, a)], limits, style.marker(key), orientation="y")
+        drawn = [point(ax, condition_x(i, j, len(alignments)), values[(key, a)], limits, style.marker(key), orientation="y")
+                 for j, a in enumerate(alignments)]
+        ax.plot(*zip(*drawn), color=style.color(key), linewidth=S.TRACE_WIDTH, zorder=2)
         if i:
             ax.axvline(i - 0.5, **S.DIVIDER, zorder=1)
     ax.set_xticks([])
     ax.set_xlim(-0.5, len(keys) - 0.5)
 
 
-def alignment_callout(ax, points, step=None):
+def alignment_callout(ax, points, size=F.TEXT_SIZE):
     """The alignments named on the first group of an offset_columns row, as genes are on a volcano plot: a leader line from
-    each dot (x, y, label) up to its name, stacked down from the top in the dots' left-to-right order so the lines don't cross."""
+    each dot (x, y, label) up to its name (size pt), stacked down from the top one line apart in the dots' left-to-right order
+    so the lines don't cross."""
+    step = (size + 0.5) / (ax.get_window_extent().height * 72 / ax.figure.dpi)
     for depth, (x, y, label) in enumerate(sorted(points)):
-        ax.annotate(label, (x, y), xytext=(CALLOUT_X, CALLOUT_TOP - (step or CALLOUT_STEP) * depth), textcoords=("data", "axes fraction"),
-                    ha="left", va="center", fontsize=F.TEXT_SIZE, color="#4d4d4d", zorder=4,
+        ax.annotate(label, (x, y), xytext=(CALLOUT_X, CALLOUT_TOP - step * depth), textcoords=("data", "axes fraction"),
+                    ha="left", va="center", fontsize=size, color="#4d4d4d", zorder=4,
                     bbox={"boxstyle": "square,pad=0.05", "facecolor": "white", "edgecolor": "none"},   # over the dividers
                     arrowprops={"arrowstyle": "-", "connectionstyle": "angle,angleA=0,angleB=90,rad=0", "linewidth": 0.5,
                                 "color": "#4d4d4d", "shrinkA": 1, "shrinkB": 2})

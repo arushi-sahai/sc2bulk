@@ -1,4 +1,4 @@
-"""Post hoc: CytoSet under the out-of-fold read-out against pseudobulk under the primary read-out (the practitioner's
+"""CytoSet under the out-of-fold read-out against pseudobulk under the primary read-out (the practitioner's
 comparison), for cytoset_cells and cytoset_pseudobulk. Stage 11b's functions do every step, loaded unedited
 (runpy, not its main): the members as 11b's out_of_fold builds them (each unit's passing splits, from
 out_of_fold_guard.csv), the comparator as against_primary's (stage 08's primary pseudobulk), 11b's bootstrap on a new

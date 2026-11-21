@@ -72,6 +72,7 @@ STAGES = [
     ("08a_alpha_edges", "08a_alpha_edges.py", "main", [], False, False),
     ("08b_secondary", "08b_secondary.py", "main", [], False, False),
     ("09_alignment", "09_alignment.py", "main", [], False, False),
+    ("09c_geometry", "09c_geometry.py", "main", [], False, False),
     # stage 10: the FM pilots (--pilot, mouse microglia) run by hand first; the Geneformer rows need SC2BULK_GENEFORMER_GO=1
     ("10_attribution", "10_attribution.py", "main", ["--model", "set"], False, True),
     ("10_attribution", "10_attribution.py", "scrat", ["--model", "scrat"], False, True),

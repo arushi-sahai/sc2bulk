@@ -7,7 +7,7 @@ content hash and its record's commit, tag and blinded flag). Before a figure is 
 unblinded in a real run (manifest.assert_unblinded) or blinded with this run's index (label-free inputs: either), made
 from a clean tree (tagged in full-run mode), and current (their recorded code hash equals the tree's).
 
-Outputs, in <labelled outputs>/figures/<item>/: <item>.pdf (the submission file), <item>.png (300-dpi preview), one
+Outputs, in <labelled outputs>/figures/<item>/: <item>.pdf (the submission file), <item>.png (300-dpi preview), <item>.svg, one
 <item><panel>.csv per panel, one <item><panel>.png per drawn panel (the panel cropped from the composite, for review),
 sources.json. In a blinded run that is outputs/blinded_<seed>/figures/, and nothing there
 leaves the server except the PNG previews.
@@ -55,7 +55,6 @@ WATERMARK = None     # set by make_all: style.BLINDED_WATERMARK in a blinded run
 NO_ENCODER_LEVEL = {k for k in F.DISPLAY_ORDER
                     if k == "pseudobulk" or configurations.CONFIGURATIONS[k]["model"] in ("geneformer", "scgpt")}
 PANEL_PAD_IN = 0.02                     # margin around a panel's own PNG (inches)
-POST_HOC_STAGE = "11c_practitioner"   # written by a script that runs stage 11b's functions (its record: 11b's own code hash)
 NEUTRAL = {"readout": "ridge", "alignment": "none", "variant": "primary", "feature_set": "panel", "cell_subset": "all",
            "permutation": -1}
 
@@ -173,13 +172,6 @@ def secondary() -> pd.DataFrame:
 
 def claims() -> dict:
     return read_json("11_statistics", "pooled", f"{LABELLED}claims.json")
-
-
-def practitioner() -> pd.DataFrame:
-    """The post hoc practitioner comparison's rows (scripts/practitioner_comparison.py: CytoSet under the out-of-fold
-    readout against pseudobulk under the main readout; stage 11b's secondary_statistics columns, row "practitioner")."""
-    REPOSITORY.append(settings.REPO / "scripts" / "practitioner_comparison.py")
-    return _read(paths.output(POST_HOC_STAGE, "", f"{LABELLED}practitioner_comparison.csv"), pd.read_csv)
 
 
 def single_cell_samples(pair) -> pd.DataFrame:
@@ -379,6 +371,16 @@ def label(key) -> str:
 
 def pair_title(pair) -> str:
     return "\n".join(PAIRS[pair]["title"])
+
+
+def stacked_title(pair, mark, lines=3) -> str:
+    """Figs 1d, 2 and 3's column title: species, tissue and phenotype, one per line, or (lines=2, Fig 3) species and
+    tissue on the first line (♦ after a pooled pair's phenotype iff mark). Titles' last lines share a baseline, so each
+    attribute forms one row across the columns."""
+    species, tissue = PAIRS[pair]["title"][0].split(" ", 1)
+    pooled = f" {F.FIGURE_TEXT['pooled_mark']}" if mark and pair in kept_pairs() else ""
+    sep = " " if lines == 2 else "\n"
+    return f"{species}{sep}{tissue}\n{PAIRS[pair]['title'][1]}{pooled}"
 
 
 def citation(item, panel) -> str:
@@ -623,7 +625,8 @@ def layout_problems(fig, panel_axes, rows) -> list:
     for i in range(len(drawn_rows) - 1):
         gap = row_box[i].y0 - row_box[i + 1].y1
         if not low <= gap <= high:
-            problems.append(f"W1: rows {'+'.join(drawn_rows[i])} | {'+'.join(drawn_rows[i + 1])}: gap {gap:.1f} mm ({low}-{high})")
+            names = ["+".join(p for p in row if p) for row in drawn_rows[i:i + 2]]
+            problems.append(f"W1: rows {names[0]} | {names[1]}: gap {gap:.1f} mm ({low}-{high})")
 
     # W2: empty bands and side margins
     content = [*drawn.values(), *(box for _, role, ax, box in texts if ax is None or role == "letter"),
@@ -790,8 +793,7 @@ def sources(paths_, repository=()) -> dict:
                 f"{path}: blinded {record['blinded']} in a run blinded with {settings.BLINDED}"
         assert not record["git"]["dirty"], f"{path}: made from a dirty tree"
         assert record["tag"] or not settings.FULL_RUN, f"{path}: untagged in full-run mode"
-        code = (manifest.stage_code_hash(settings.REPO / "pipeline" / "11b_secondary.py") if stage == POST_HOC_STAGE
-                else current_code(stage, pair if pair in PAIR_ORDER else None))
+        code = current_code(stage, pair if pair in PAIR_ORDER else None)
         assert record["settings"]["code"] == code, f"{path}: stale (code changed since)"
         out.append({"path": str(path.relative_to(settings.OUTPUTS)), "content_hash": content_hash(path), "commit": record["git"]["commit"],
                     "tag": record["tag"], "blinded": record["blinded"]})
@@ -815,8 +817,9 @@ def save(fig, item, script, panel_axes, rows):
     check_figure(fig, item)
     out = directory(item)
     name = stem(item)
-    for suffix, metadata in (("pdf", {"CreationDate": None, "Producer": None}), ("png", {"Software": None})):
-        write_bytes(out / f"{name}.{suffix}", lambda p: fig.savefig(p, format=suffix, dpi=S.DPI, metadata=metadata))
+    with plt.rc_context({"svg.hashsalt": "sc2bulk"}):   # fixed SVG ids: byte-reproducible, as the PDF and PNG
+        for suffix, metadata in (("pdf", {"CreationDate": None, "Producer": None}), ("png", {"Software": None}), ("svg", {"Date": None})):
+            write_bytes(out / f"{name}.{suffix}", lambda p: fig.savefig(p, format=suffix, dpi=S.DPI, metadata=metadata))
     renderer = fig.canvas.get_renderer()
     letters = [t for t in fig.findobj(Text) if t.get_gid() == "panel_label"]
     for letter in letters:

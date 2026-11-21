@@ -139,12 +139,14 @@ def digest(paths) -> str:
 def extra(stage: str, pair: str) -> list:
     """Files a stage loads by name, added to its hash: the pair's data reader (stages 02, 02b); stage
     07's script, whose functions stage 07d runs (runpy); stage 03's, whose split() stage 03b runs; stage
-    08's, whose features stages 09 and 12a read; stage 06's, whose helpers stage 12 runs."""
+    08's, whose features stages 09 and 12a read; stages 09 and 08's, whose functions stage 09c runs; stage
+    06's, whose helpers stage 12 runs."""
     if stage in ("02_preprocess", "02b_all_available"):
         return [SRC / "sc2bulk" / "data" / f"{pair}.py"]
     return {"07d_embed_all_available": [REPO / "pipeline" / "07_embed.py"],
             "03b_attribution_splits": [REPO / "pipeline" / "03_splits.py"],
             "09_alignment": [REPO / "pipeline" / "08_readout.py"],
+            "09c_geometry": [REPO / "pipeline" / n for n in ("09_alignment.py", "08_readout.py")],   # 09c runs 09's and 08's (runpy)
             "12_simulation": [REPO / "pipeline" / "06_train.py"],     # 12 runs stage 06's helpers (runpy)
             "12a_properties": [REPO / "pipeline" / "08_readout.py"],   # 12a reads stage 08's features
             "08b_secondary": [REPO / "pipeline" / "08_readout.py"],    # 08b runs stage 08's functions (runpy)

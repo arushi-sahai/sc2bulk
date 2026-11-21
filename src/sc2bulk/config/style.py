@@ -35,11 +35,16 @@ assert not set(SIDE_COLORS.values()) & {*FAMILY_COLORS.values(), *MODEL_COLORS.v
 
 # Pattern = input: pseudobulk-input configurations are hatched (bars) or hollow (markers)
 PSEUDOBULK_HATCH = "////"
-HOLLOW_MARKER = {"facecolor": "none", "linewidth": 0.6}    # outline >= 0.5 pt (checklist; 0.6 on 3 pt markers)
+MARKER_EDGE = 0.6                      # a marker's outline, pt (>= 0.5 pt, checklist)
+# A hollow mean marker: a white face over the lines and dots behind it, a heavier outline and a little larger, so the
+# hollow reads at print size; hollow seed dots stay open with the thin outline
+HOLLOW_MARKER = {"facecolor": "white", "linewidth": 1.0, "size_factor": 1.12}
 
-# Alignment method = a labeled x-offset column within each configuration's row (Fig 3B/C and
-# its supplement); no shape glyphs, so model markers keep one meaning
-ALIGNMENT_X_OFFSET = {"none": -0.3, "combat": -0.1, "coral": 0.1, "harmony": 0.3}
+# Alignment condition = a labeled x-offset within each configuration's group (Fig 3b/c and its supplement), the
+# conditions spread evenly over this width in their figure's order and joined by a thin line in the configuration's
+# color; no shape glyphs, so model markers keep one meaning
+ALIGNMENT_SPREAD = 0.6
+TRACE_WIDTH = 0.5                      # the line joining a configuration's conditions
 
 # Samples (Fig 3a, Fig. S13a–e; reviewer fixes adopted 2026-10-08): one circle shape, side = SIDE_COLORS, group = filled (1)
 # vs. open (0) (figures/style.modality); the rows are labelled in text, no family hues in those panels
@@ -63,8 +68,6 @@ REFERENCE_RULE = {"color": "#9e9e9e", "linewidth": 0.5}   # Fig 2a: the thin rul
 PSEUDOBULK_LINE = {"linestyle": "--", "linewidth": 1.0, "color": MODEL_COLORS["pseudobulk"]}
 WITHIN_BULK_LINE = {"linestyle": "-.", "linewidth": 1.0, "color": "#4d4d4d"}
 CHANCE_LINE = {"linestyle": ":", "linewidth": 1.0, "color": "#4d4d4d"}
-POOLING_LINE = {"linestyle": "--", "linewidth": 0.6, "color": "#808080"}   # Fig 2A strip: 1 - X
-STRIP_BAR = "#bdbdbd"
 MARGIN_BAND = {"color": "#e6e6e6", "linewidth": 0}       # Fig 2A and Fig. S9: from +0.05 to the axis edge
 DIVIDER = {"linestyle": ":", "linewidth": 0.5, "color": "#4d4d4d"}   # Fig 4: candidates | the ring point
 

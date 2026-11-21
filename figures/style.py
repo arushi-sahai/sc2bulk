@@ -3,7 +3,7 @@ import textwrap
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Patch, Rectangle
 from matplotlib.transforms import blended_transform_factory
 
 from sc2bulk.config import configurations
@@ -31,15 +31,18 @@ def apply():
     })
 
 
-def marker(key, size=S.MARKER_SIZE) -> dict:
-    """ax.plot keywords for a configuration's mean marker: color + marker = model, hollow = pseudobulk input; or a
-    reference row's black X."""
+def marker(key, size=S.MARKER_SIZE, mean=True) -> dict:
+    """ax.plot keywords for a configuration's marker: color + marker = model, hollow = pseudobulk input (a mean marker:
+    config/style.HOLLOW_MARKER; mean False, for seed dots and samples: open, thin outline); or a reference row's black X."""
     if key in configurations.CONFIGURATIONS:
         config = configurations.CONFIGURATIONS[key]
         hollow = config["input"] == "pseudobulk" and config["model"] != "pseudobulk"
         color = S.MODEL_COLORS[config["model"]]
+        if hollow and mean:
+            return {"marker": config["marker"], "color": color, "markerfacecolor": S.HOLLOW_MARKER["facecolor"], "markeredgecolor": color,
+                    "markeredgewidth": S.HOLLOW_MARKER["linewidth"], "markersize": size * S.HOLLOW_MARKER["size_factor"], "linestyle": "none"}
         return {"marker": config["marker"], "color": color, "markerfacecolor": "none" if hollow else color,
-                "markeredgecolor": color, "markeredgewidth": S.HOLLOW_MARKER["linewidth"], "markersize": size, "linestyle": "none"}
+                "markeredgecolor": color, "markeredgewidth": S.MARKER_EDGE, "markersize": size, "linestyle": "none"}
     return {"marker": S.REFERENCE_STYLE["marker"], "color": S.REFERENCE_STYLE["color"], "markerfacecolor": S.REFERENCE_STYLE["color"],
             "markeredgecolor": S.REFERENCE_STYLE["color"], "markeredgewidth": 0.5, "markersize": size, "linestyle": "none"}
 
@@ -62,15 +65,7 @@ BASE_MATCHED = {"marker": "^", "markerfacecolor": "none", "markeredgecolor": "#7
 def recolored(kwargs, color) -> dict:
     """ax.plot keywords in another color (Fig 2a's gray reference rows), hollow markers kept hollow."""
     face = kwargs.get("markerfacecolor")
-    return {**kwargs, "color": color, "markeredgecolor": color, **({"markerfacecolor": color} if face not in ("none", None) else {})}
-
-
-# Fig 2a's post hoc practitioner comparison: a second, smaller mark on the CytoSet rows (a vertical tick in CytoSet's color)
-PRACTITIONER = {"marker": "|", "markersize": S.MARKER_SIZE * 1.8, "markeredgewidth": 1.0, "linestyle": "none"}
-
-
-def practitioner(key) -> dict:
-    return {**PRACTITIONER, "color": color(key)}
+    return {**kwargs, "color": color, "markeredgecolor": color, **({"markerfacecolor": color} if face not in ("none", None, S.HOLLOW_MARKER["facecolor"]) else {})}
 
 
 def label(key) -> str:
@@ -79,7 +74,7 @@ def label(key) -> str:
 
 
 def seed_dots(key) -> dict:
-    return {**marker(key, S.MARKER_SIZE * S.SEED_DOT_FACTOR), "alpha": S.SEED_DOT_ALPHA}
+    return {**marker(key, S.MARKER_SIZE * S.SEED_DOT_FACTOR, mean=False), "alpha": S.SEED_DOT_ALPHA}
 
 
 def color(key) -> str:
@@ -178,21 +173,22 @@ def legend_strip(fig, keys, extras=(), y=0.995, ncol=6, loc="upper center", x=0.
     handles = [Line2D([], [], **marker(k), label=label(k)) for k in keys]
     groups = groups or F.TEXT["group"]
     glyphs = {"reference": Line2D([], [], **marker("reference"), label=F.TEXT["reference_row"]),
-              "reference_gray": Line2D([], [], **recolored(marker("reference"), S.REFERENCE_GRAY), label=F.TEXT["reference_row"]),
-              "practitioner": Line2D([], [], **practitioner("cytoset_cells"), label=F.TEXT["practitioner"]),
+              "baseline_control": Line2D([], [], **recolored(marker("reference"), S.REFERENCE_GRAY), label=F.TEXT["baseline_control"]),
+              "margin_band": Patch(**S.MARGIN_BAND, label=F.TEXT["margin_band"]),
               "ring": Line2D([], [], marker=S.SELECTED_RING["marker"], markerfacecolor="none", markeredgecolor="#4d4d4d",
                              markeredgewidth=S.SELECTED_RING["linewidth"], markersize=S.MARKER_SIZE * S.SELECTED_RING["size_factor"],
                              linestyle="none", label=F.TEXT["ring"]),
               "pseudobulk_zero": Line2D([], [], **S.PSEUDOBULK_LINE, label=F.TEXT["pseudobulk_zero"]),
               "within_bulk": Line2D([], [], **S.WITHIN_BULK_LINE, label=F.TEXT["within_bulk"]),
+              "within_bulk_fig2": Line2D([], [], **S.WITHIN_BULK_LINE, label=F.TEXT["within_bulk_fig2"]),
               "chance": Line2D([], [], **S.CHANCE_LINE, label=F.TEXT["chance_line"]),
               "oracle": Line2D([], [], **ORACLE, label=F.FIGURE_TEXT["oracle"]),
-              "pseudobulk_unaligned": Line2D([], [], **S.PSEUDOBULK_LINE, label=F.TEXT["pseudobulk_unaligned"]),
+              "pseudobulk_within_assay": Line2D([], [], **S.PSEUDOBULK_LINE, label=F.TEXT["pseudobulk_within_assay"]),
               "pseudobulk_bulk": Line2D([], [], **S.PSEUDOBULK_LINE, label=F.TEXT["pseudobulk_bulk"]),
               "pseudobulk_fig2": Line2D([], [], **S.PSEUDOBULK_LINE, label=F.TEXT["pseudobulk_fig2"]),
               "ensemble": Line2D([], [], color="#4d4d4d", linewidth=1.0, label=F.TEXT["ensemble"]),
               "by_construction": Line2D([], [], marker="o", linestyle="none", markerfacecolor="none", markeredgecolor=S.BY_CONSTRUCTION_COLOR,
-                                        markeredgewidth=S.HOLLOW_MARKER["linewidth"], markersize=S.MARKER_SIZE, label=F.TEXT["by_construction"]),
+                                        markeredgewidth=S.MARKER_EDGE, markersize=S.MARKER_SIZE, label=F.TEXT["by_construction"]),
               "base_all": Line2D([], [], **BASE_LINE, label=F.TEXT["base_all"]),
               "base_matched": Line2D([], [], **BASE_MATCHED, label=F.TEXT["base_matched"]),
               "pseudobulk_n": Line2D([], [], color=color("pseudobulk"), marker="o", markersize=S.MARKER_SIZE * 0.7, label=F.TEXT["pseudobulk_n"]),

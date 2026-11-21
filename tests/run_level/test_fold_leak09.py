@@ -1,13 +1,14 @@
-"""Run-level fold-leak check of stage 09: a
-cross-fitting fold's alignment outputs must not depend on its scored donors' single-cell data or raw labels.
+"""Run-level fold-leak check of stages 09 and 09c: a cross-fitting fold's alignment outputs and coordinates must not depend on its scored
+donors' single-cell data or raw labels.
 
 As tests/run_level/test_fold_leak.py (whose perturbation it reuses): on a copy of the smoke run's stage-02
 outputs for the cross-fitted pair, fold 0's scored donors get their cells' genes permuted and their
-label_value changed; stages 03, 04, 08 and 09 are rerun on the copy for pseudobulk (end to end for
-pseudobulk only, as stage 08's check). Fold 0's stage 09 files must be byte-identical to the original
-smoke run's; the positive control: folds 1-3, which train on those donors, must change.
+label_value changed; stages 03, 04, 08, 09 and 09c are rerun on the copy for pseudobulk (end to end for
+pseudobulk only, as stage 08's check). Fold 0's stage 09 and 09c files must be byte-identical to the original
+smoke run's; the positive control: folds 1-3, which train on those donors, must change in stage 09 (09c writes fold 0
+only, so it has none of its own).
 
-Needs the smoke outputs (pipeline/run_all.py --smoke through 09_alignment). Run with
+Needs the smoke outputs (pipeline/run_all.py --smoke through 09c_geometry). Run with
   SC2BULK_RUN_LEVEL=1 SC2BULK_OUTPUTS=<outputs> python -m pytest tests/run_level
 """
 import os
@@ -26,7 +27,7 @@ from test_fold_leak import PAIR, permute_genes
 pytestmark = pytest.mark.skipif(os.environ.get("SC2BULK_RUN_LEVEL") != "1", reason="run-level check")
 
 
-def test_stage09_fold_zero_ignores_its_scored_donors(tmp_path):
+def test_stages_09_and_09c_fold_zero_ignore_its_scored_donors(tmp_path):
     smoke = settings.OUTPUTS if settings.SMOKE else settings.OUTPUTS / "smoke"
     copy = tmp_path / "smoke"
     shutil.copytree(smoke / "02_preprocess" / PAIR, copy / "02_preprocess" / PAIR)
@@ -48,7 +49,7 @@ def test_stage09_fold_zero_ignores_its_scored_donors(tmp_path):
     env = dict(os.environ, SC2BULK_OUTPUTS=str(tmp_path), SC2BULK_SMOKE="1")
     for stage in ("03_splits", "04_panel"):
         subprocess.run([sys.executable, str(settings.REPO / "pipeline" / f"{stage}.py"), "--pair", PAIR], env=env, check=True)
-    for stage in ("08_readout", "09_alignment"):
+    for stage in ("08_readout", "09_alignment", "09c_geometry"):
         subprocess.run([sys.executable, str(settings.REPO / "pipeline" / f"{stage}.py"), "--pair", PAIR, "--configuration", "pseudobulk"],
                        env=env, check=True)
 
@@ -57,5 +58,7 @@ def test_stage09_fold_zero_ignores_its_scored_donors(tmp_path):
                 for name in ("pseudobulk_predictions.parquet", "pseudobulk_heads.parquet", "pseudobulk_geometry.parquet")}
 
     assert files(smoke, 0) == files(copy, 0), "fold 0's stage 09 outputs depend on its scored donors"
+    coordinates = [root / "09c_geometry" / PAIR / "crossfit_0" / "pseudobulk_geometry.parquet" for root in (smoke, copy)]
+    assert coordinates[0].read_bytes() == coordinates[1].read_bytes(), "fold 0's stage 09c coordinates depend on its scored donors"
     assert any(files(smoke, f)["pseudobulk_predictions.parquet"] != files(copy, f)["pseudobulk_predictions.parquet"]
                for f in (1, 2, 3)), "the perturbation reached no stage 09 output"

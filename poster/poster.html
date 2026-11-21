@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>sc2bulk poster</title>
+<style>
+  @page { size: 100cm 80cm; margin: 0; }
+  :root {
+    --carolina: #7BAFD4;
+    --navy: #1F4272;
+    --ink: #1A1A1A;
+    --rule: #1F4272;
+    --footer: #F2F4F7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100cm; height: 80cm; background: #FFFFFF; }
+  body { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; color: var(--ink); }
+  .poster { width: 100cm; height: 80cm; display: grid; grid-template-rows: 10.4cm 1fr 8cm; }
+
+  header { background: var(--carolina); display: flex; align-items: center; padding: 0 2cm; gap: 2cm; }
+  header .titles { flex: 1; }
+  header h1 { font-size: 58pt; line-height: 1.08; font-weight: bold; color: var(--navy); }
+  header .authors { font-size: 32pt; margin-top: 0.3cm; color: var(--navy); }
+  header .affiliations { font-size: 20pt; margin-top: 0.2cm; color: var(--navy); }
+  header .logo { height: 5.5cm; }
+
+  main { display: grid; grid-template-columns: repeat(3, 31cm); column-gap: 1.5cm; padding: 1.1cm 2cm 0.4cm; min-height: 0; overflow: hidden; }
+  section { display: flex; flex-direction: column; }
+  h2 { font-size: 44pt; line-height: 1.12; color: var(--navy); padding-bottom: 0.3cm; border-bottom: 0.12cm solid var(--rule); margin-bottom: 0.55cm; }
+  h2 + * { margin-top: 0; }
+  .block + h2 { margin-top: 0.75cm; }
+  h2.bottom { margin-top: auto; }
+  section:last-child { padding-bottom: 0.42cm; }
+  ul { list-style: none; }
+  li { font-size: 26pt; line-height: 1.15; padding-left: 1.0cm; position: relative; margin-bottom: 0.27cm; }
+  li::before { content: ""; position: absolute; left: 0.2cm; top: 0.42em; width: 0.38cm; height: 0.38cm; border-radius: 50%; background: var(--navy); }
+  figure { margin: 0 0 0.35cm; }
+  figure img { width: 31cm; display: block; }
+
+  footer { background: var(--footer); border-top: 0.12cm solid var(--rule); display: grid; grid-template-columns: 1fr 16.5cm 7.6cm; column-gap: 1.6cm; align-items: start; padding: 0.7cm 2cm 1.7cm; }
+  footer h3 { font-size: 20pt; color: var(--navy); margin-bottom: 0.2cm; }
+  footer .refs { font-size: 15pt; line-height: 1.28; display: grid; grid-template-columns: 0.85fr 1.15fr; column-gap: 1.2cm; }
+  footer .refs span { white-space: nowrap; }
+  footer p { font-size: 16pt; line-height: 1.3; text-wrap: balance; }
+  footer p + p { margin-top: 0.25cm; }
+  footer .qr { margin: 0 auto; width: 4.2cm; height: 4.2cm; border: 0.08cm dashed var(--navy); display: flex; align-items: center; justify-content: center; font-size: 16pt; color: var(--navy); text-align: center; }
+  footer .qr-label { font-size: 13pt; margin-top: 0.2cm; text-align: center; color: var(--navy); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="poster">
+
+<header>
+  <div class="titles">
+    <h1>A benchmark of deep learning sample representations from scRNA‑seq for predicting phenotypes in bulk RNA‑seq cohorts</h1>
+    <p class="authors">Arushi Sahai<sup>1</sup>, Beatriz Campillo<sup>3</sup>, Luvna Dhawka<sup>2,3</sup>, Natalie Stanley<sup>1,2,4</sup></p>
+    <p class="affiliations"><sup>1</sup>Department of Computer Science, <sup>2</sup>Computational Medicine Program, <sup>3</sup>Curriculum in Bioinformatics and Computational Biology, <sup>4</sup>Department of Genetics, The University of North Carolina at Chapel Hill</p>
+  </div>
+  <img class="logo" src="assets/unc-signature-white-navy.svg" alt="The University of North Carolina at Chapel Hill">
+</header>
+
+<main>
+  <section>
+    <h2>Introduction</h2>
+    <ul class="block">
+      <li><b>Motivation:</b> Phenotype models trained on single-cell RNA‑seq capture cell-level biology, but single-cell cohorts are small; applying such models to larger bulk RNA‑seq cohorts, which often carry clinical outcomes, would allow the models to be validated and used at scale.</li>
+      <li><b>Challenge:</b> Single-cell and bulk cohorts often differ in how the tissue was prepared and originate from different individuals, so a model trained on single-cell samples may not generalize to bulk samples.</li>
+      <li><b>Approach:</b> The simplest representation of a single-cell sample is pseudobulk, a fixed sum of the sample's cells; deep learning models instead learn a nonlinear representation from the individual cells, and foundation models also add pretraining on millions of cells.</li>
+      <li><b>Question: Do deep learning sample representations of single-cell samples predict bulk phenotypes more accurately than pseudobulk?</b></li>
+    </ul>
+    <h2>Benchmark design</h2>
+    <figure><img src="{fig1}" alt="Figure 1"></figure>
+    <ul class="block">
+      <li><b>Task:</b> A ridge classifier learns the phenotype from representations of labeled single-cell samples and is then applied unchanged to bulk samples, scored by bulk AUROC from 0.5 (chance) to 1 (perfect) (a).</li>
+      <li><b>Comparison:</b> The classifier receives pseudobulk or one of nine deep learning representations from three model families (b, c); differences in bulk AUROC from pseudobulk measure each representation's quality.</li>
+      <li><b>Datasets:</b> Six datasets of paired single-cell and bulk cohorts differ in tissue preparation, phenotype definition, and cohort independence (d, e).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>No deep learning sample representation outperformed pseudobulk</h2>
+    <figure><img src="{fig2}" alt="Figure 2"></figure>
+    <ul class="block">
+      <li><b>Reading the plot:</b> Each point is a representation's bulk AUROC minus that of pseudobulk; points left of zero indicate lower accuracy (a).</li>
+      <li><b>Averaging:</b> A single dataset is too small to detect a 0.05 AUROC difference, the smallest advantage we consider worth the training, tuning, and GPU a deep learning representation requires; we therefore average over the four datasets marked ♦, excluding the two where pseudobulk's AUROC of 0.95 or more makes a 0.05 advantage impossible.</li>
+      <li><b>Main result: Averaged over the four ♦ datasets, pseudobulk significantly outperformed seven of the nine deep learning representations and did not differ significantly from either CytoSet representation; no representation significantly outperformed pseudobulk in any dataset (a).</b></li>
+      <li><b>Baselines and controls:</b> Permuting the single-cell labels reduced pseudobulk to chance, an untrained CytoSet and pseudobulk reduced to 64 principal components scored below pseudobulk, and a ridge classifier trained and tested within the bulk samples scored above pseudobulk (a).</li>
+      <li><b>Learning versus transfer:</b> Every representation predicted the phenotype accurately within single-cell data, so the models themselves are sound; the deficit relative to pseudobulk arises in the transfer to bulk samples (b).</li>
+      <li><b>Cells or pseudobulk as input:</b> CytoSet, Geneformer, and scGPT can also encode a sample's pseudobulk instead of individual cells. With either input, CytoSet scored close to pseudobulk itself, whereas the frozen foundation models scored well below pseudobulk (c).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Batch correction did not improve transfer</h2>
+    <figure><img src="{fig3}" alt="Figure 3"></figure>
+    <ul class="block">
+      <li><b>Rationale:</b> Single-cell and bulk cohorts differ systematically, in part because of technical factors such as tissue preparation; we tested whether removing such differences between assays improves transfer.</li>
+      <li><b>Methods:</b> We compared no correction (across-assay standard scaling), mean and variance correction (within-assay standard scaling), and batch correction (ComBat or Harmony), each applied without phenotype labels.</li>
+      <li><b>Reading the plot:</b> Panel (a) plots samples on the first two principal components. The silhouette ranges from 0 (assays mixed) to 1 (assays separate). Panels (b) and (c) show the silhouette and bulk AUROC after each correction method is applied to the sample representations.</li>
+      <li><b>Separation:</b> Within-assay scaling, our default method, removed most of the difference between assays in every dataset; ComBat further reduced the difference slightly, and Harmony partly restored the difference (b).</li>
+      <li><b>Transfer:</b> Bulk AUROC did not improve as the difference between assays was reduced, and CytoSet and scGPT stayed below pseudobulk (c).</li>
+    </ul>
+    <h2 class="bottom">Conclusions</h2>
+    <ul class="block">
+      <li>Pseudobulk, which requires no training, matched or outperformed every representation tested, establishing pseudobulk as the baseline any new deep learning representation must outperform.</li>
+      <li>The benchmark and code are public for evaluating new representations.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div>
+    <h3>References</h3>
+    <div class="refs">
+      <div><b>Models.</b> 1. Yi and Stanley, <i>ACM International Conference on Bioinformatics, Computational Biology, and Health Informatics</i>, 2021 (CytoSet). 2. Lee et al., <i>International Conference on Machine Learning</i>, 2019 (Set Transformer). 3. Mao et al., <i>Bioinformatics</i>, 2024 (ScRAT). 4. Lopez et al., <i>Nature Methods</i>, 2018 (scVI). 5. Theodoris et al., <i>Nature</i>, 2023 (Geneformer). 6. Chen et al., <i>Nature Computational Science</i>, 2026 (Geneformer V2). 7. Cui et al., <i>Nature Methods</i>, 2024 (scGPT). 8. Johnson et al., <i>Biostatistics</i>, 2007 (ComBat). 9. Korsunsky et al., <i>Nature Methods</i>, 2019 (Harmony).</div>
+      <div><b>Data.</b> 10. Hammond et al., <i>Immunity</i>, 2019 (mouse microglia, aging: single-cell). 11. Reemst et al., <i>Translational Psychiatry</i>, 2022 (mouse microglia, aging: bulk). 12. Tabula Muris Consortium, <i>Nature</i>, 2020 (mouse organs, aging: single-cell). 13. Schaum et al., <i>Nature</i>, 2020 (mouse organs, aging: bulk). 14. Gong et al., <i>Nature</i>, 2025 (human blood, aging: single-cell and bulk). 15. Smithmyer et al., <i>Science Translational Medicine</i>, 2025 (human blood, aging: bulk). 16. Perez et al., <i>Science</i>, 2022 (human blood, lupus: single-cell). 17. Hung et al., <i>Science</i>, 2015 (human blood, lupus: bulk). 18. Krzak et al., <i>Nature Genetics</i>, 2026 (human ileum, Crohn's: single-cell). 19. Alegbe et al., <i>Nature</i>, 2026 (human ileum, Crohn's: single-cell). 20. Argmann et al., <i>Gut</i>, 2023 (human ileum, Crohn's: bulk). 21. Pineda et al., <i>Cell</i>, 2024 (human motor cortex, ALS: single-cell). 22. Prudencio et al., <i>Journal of Clinical Investigation</i>, 2020 (human motor cortex, ALS: bulk).</div>
+    </div>
+  </div>
+  <div>
+    <h3>Acknowledgments</h3>
+    <p>Supported by the National Institute of Allergy and Infectious Diseases, NIH (5R21AI171745-02, to Natalie&nbsp;Stanley). We thank Betsy George for the scGPT environment and checkpoint, and the participants and investigators of every study whose data we reused.</p>
+    <p><b>Contact:</b> Arushi Sahai, arushis@cs.unc.edu</p>
+  </div>
+  <div>
+    <div class="qr">QR code</div>
+    <div class="qr-label">github.com/arushi-sahai/sc2bulk</div>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>

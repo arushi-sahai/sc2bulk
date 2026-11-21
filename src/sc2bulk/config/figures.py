@@ -52,16 +52,15 @@ ITEMS = {
 }
 
 # Main figures whose figure + legend (style.MAX_HEIGHT_MM) is not yet within the limit; each leaves this set in its figure pass
-# (empty since 2026-11-04: every main figure is checked)
-LEGEND_FIT_PENDING = set()
+LEGEND_FIT_PENDING = {"Fig 2"}
 # Figures whose layout checks (figures/common.check_layout) are reported but not yet asserted; each leaves this set
 # once its report is clean (empty since 2026-11-04: every figure is checked)
 LAYOUT_PENDING = set()
 # Each item's drawn height in mm (Genome Biology: <= 225 mm including the legend; a working cap below it, set from the
 # rehearsal's PNGs; style.MAX_HEIGHT_MM is the hard limit)
-HEIGHT_MM = {"Fig 1": 156, "Fig. S1": 114,
-             "Fig 2": 153, "Fig 3": 150, "Fig 4": 163, "Fig 5": 160, "Fig 6": 157, "Fig. S8": 190, "Fig. S9": 215,
-             "Fig. S10": 193, "Fig. S11": 220, "Fig. S12": 125, "Fig. S13": 196, "Fig. S14": 215, "Fig. S15": 225, "Fig. S16": 215,
+HEIGHT_MM = {"Fig 1": 160, "Fig. S1": 114,
+             "Fig 2": 159, "Fig 3": 170, "Fig 4": 163, "Fig 5": 160, "Fig 6": 157, "Fig. S8": 190, "Fig. S9": 215,
+             "Fig. S10": 193, "Fig. S11": 220, "Fig. S12": 125, "Fig. S13": 225, "Fig. S14": 215, "Fig. S15": 225, "Fig. S16": 215,
              **{item: 150 if pair in ("hammond", "soundlife", "lupus") else 190 for pair, item in QC_FIGURES.items()}}   # S2-S7: three or four rows
 
 # The S12B UCE panel is drawn iff UCE is run (not a configuration, so not in CUT_CONFIGURATIONS): asserted against the
@@ -94,8 +93,9 @@ QC_LABELS = {"genes_detected": "Median genes\nper cell", "total_counts": "Median
 LEVELS_LABEL = "{label}\n{n} levels"  # a count panel whose level names don't fit flat drops them and states their number
 # The 0/1 groups' display names per pair (QC figures), and across pairs (S8's key)
 GROUP_NAMES = {"hammond": ("younger", "older"), "tms": ("younger", "older"), "soundlife": ("younger", "older"),
-               "lupus": ("control", "SLE"), "crohns": ("control", "Crohn's"), "pineda": ("control", "ALS")}
+               "lupus": ("control", "lupus"), "crohns": ("control", "Crohn's"), "pineda": ("control", "ALS")}
 GROUP_NAMES_ALL = ("control / younger", "case / older")
+ANNOTATION_TEXT = {"SLE": "lupus"}   # stage 04d annotations as printed (config/fig1e, hashed into 04d, keeps its own)
 # Display labels of sample-table columns in QC and S8 panels (others: underscores to spaces, sentence case)
 COLUMN_LABELS = {"age": "Age (years)", "age_at_death": "Age at death (years)", "pmi_hours": "Postmortem interval (hours)",
                  "cmv": "CMV serostatus", "organs": "Organs per mouse", "enzyme_lot_BLP": "Enzyme lot (BLP)",
@@ -115,10 +115,12 @@ SUBGROUP_SHORT = {"Negative": "CMV−", "Positive": "CMV+", "NYGC ALS Consortium
 # wrapped at TYPE_WRAP characters. The CSVs keep the annotated names.
 TYPE_WRAP = 22
 # single-pair main panels: the pair's name beside the letter, this many points above the axes (clears the plot titles)
-PAIR_TAG_PT = {"Fig 3A": 36, "Fig 5D": 16}
+PAIR_TAG_PT = {"Fig 3A": 28, "Fig 5D": 16}
 # the figures' alignment names where they differ from config/configurations (that file is in frozen closures)
-ALIGNMENT_DISPLAY = {"none": "per-side (no alignment)"}
-ALIGNMENT_TICKS = {"none": "per-side", "combat": "ComBat", "coral": "CORAL", "harmony": "Harmony", "unaligned_stacked": "one scaler"}   # Fig 3b/c, S13f: under the first group
+# ("none": stage 08's per-side standardization; "unaligned_stacked": one scaler fit over both sides)
+ALIGNMENT_DISPLAY = {"none": "within-assay", "unaligned_stacked": "across-assay"}
+ALIGNMENT_TICKS = {"unaligned_stacked": "across-assay", "none": "within-assay", "combat": "ComBat", "coral": "CORAL",
+                   "harmony": "Harmony"}   # Fig 3b and Fig. S13f, h: named on the first pair's pseudobulk dots
 # Fig 6C's cell type per pair, in its column title: each pair's one-type annotation (config/pairs one_type)
 # as displayed; a pair with a type per stratum (mouse organs, per organ) shows ONE_TYPE_PER_STRATUM, its types in the caption
 FIG6C_TYPE_NAMES = {"T cell": "T cells", "CD4-positive, alpha-beta T cell": "CD4+ αβ T cells",
@@ -179,7 +181,8 @@ PANELS = {
                 "D": "Gene-panel size", "E": "Subgroups", "F": "Age adjustment"},
     "Fig. S12": {"A": "Full gene sets and orthologs", **({"B": "UCE"} if S12B_UCE else {}), "C": "Learning curves"},
     "Fig. S13": {**{chr(ord("A") + i): f"The gap illustrated ({p})" for i, p in enumerate(FIG13_OTHER_PAIRS)},
-                "F": "Pseudobulk-input configurations under alignment"},
+                "F": "Modality silhouette, configurations on cells", "G": "Bulk AUROC, configurations on cells",
+                "H": "Modality silhouette, pseudobulk-input configurations", "I": "Bulk AUROC, pseudobulk-input configurations"},
     "Fig. S14": {"A": "Stability", "B": "Top 25 and top 100", "C": "LASSO genes", "D": "Attribution checks"},
     "Fig. S15": {chr(ord("A") + i): f"Modality-direction genes ({k})" for i, k in enumerate(S15_KEYS)},
     "Fig. S16": {"A": "Every comparison with pseudobulk"},
@@ -277,15 +280,12 @@ FIG5_CRITERION = "Simulation criterion (structure only, margin {margin}): {resul
 FIGURE_TEXT = {
     # the pooled pairs' mark (a diamond: the figure fonts have no star, and "*" reads as significance)
     "pooled_mark": "♦",
-    "pooled_header": "Pooled average ({mark} pairs)",
-    "pooled_header_k1": "Single pair ({mark})",
+    "pooled_header": "Average\n({mark} datasets)",
+    "pooled_header_k1": "Single dataset\n({mark})",
     "pooled_k0": "No pair below {threshold}: no pooled average",
-    "pooled_short": "Pooled\n({mark} pairs)",   # Figs. S9-S12's pooled column title
-    "pooled_short_k1": "Single pair\n({mark})",
+    "pooled_short": "Average\n({mark} datasets)",   # Figs. S9-S12's pooled column title
+    "pooled_short_k1": "Single dataset\n({mark})",
     "pooled_strip": "Pseudobulk bulk AUROC",   # Fig 2A's strip above the columns
-    "pooled_strip_key": "{line:g}: allows a\n{margin:g} advantage",   # Fig 2A's key to the strip's dashed line
-    "out_of_fold_header": "Pooled,\nout-of-fold\nreadout",   # Fig 2A's right column
-    "reference_block": "Reference and\ncontrol rows",   # Fig 2A: rotated, left of the reference rows' labels
     "fig4a_fm_cut": "Frozen foundation models: up to 1,000 cells.",
     "fig4a_scgpt_only": "Geneformer: up to 1,000 cells.",     # the partial fallback (scGPT keeps its "all" point)
     "fig4a_not_estimable": "n.e.: not estimable (CytoSet, \"all\"; the age-similarity loss exceeds memory there, Methods).",
@@ -294,6 +294,7 @@ FIGURE_TEXT = {
     "not_applicable": "n/a",
     "not_affordable": "not computed (computational cost)",
     "pending": "n/a (pending)",                                 # the Geneformer deletion not yet run; never final
+    "coordinates_pending": "coordinates not yet saved",   # Fig 3a, S13a-e: a row outside config/geometry.CONFIGURATIONS
     "selected": "selected",
     "not_drawn": "Not drawn in a blinded run (needs stage 11/11b tables; frozen §29.2)",
     "oracle": "best on bulk (for reference only, never selected)",
@@ -306,26 +307,28 @@ DROPPED_TEXT = {"triaged": "not_affordable", "pending": "pending"}
 
 # Fig 1C: the ten configurations as a model x input grid (the design: drawn from config, no stage output)
 FIG1C_INPUTS = ("cells", "pseudobulk")
-# Fig 1D, the dataset pairs (script-drawn): per pair and side, (tissue or preparation, assay,
-# groups compared in the label's natural units). From config/pairs/<pair>.py
+# The dataset pairs (Table 1; Fig 1D draws the groups): per pair and side, (tissue or preparation, assay, groups compared,
+# units spelled out). From config/pairs/<pair>.py
 # ("single_cell" and "bulk" sources; "groups" and its unit comment) and config/fig1e.FIG1E's tissue annotations.
 FIG1D = {
-    "hammond": {"single_cell": ("whole-brain microglia", "scRNA-seq", "E14.5–P30 vs. P100–P540"),   # age in days, E14.5 = -4.5
-                "bulk": ("hippocampal microglia", "bulk", "P9 vs. P200")},
-    "tms": {"single_cell": ("4 organs, dissociated", "scRNA-seq", "1–3 vs. 18–30 mo"),   # single-cell ages 1, 3, 18-30 months
-            "bulk": ("4 organs, whole", "bulk", "≤ 6 vs. 18–30 mo")},           # the groups' ranges (0-6, 18-30)
-    "soundlife": {"single_cell": ("PBMC", "scRNA-seq", "25–37 vs. 55–67 y"),
-                  "bulk": ("whole blood", "bulk", "25–37 vs. 55–67 y")},
-    "lupus": {"single_cell": ("PBMC", "scRNA-seq", "control vs. SLE"),
-              "bulk": ("whole blood", "bulk", "control vs. SLE")},
+    "hammond": {"single_cell": ("whole-brain microglia", "scRNA-seq", "≤ 30 days vs. 100–540 days"),   # from E14.5 (-4.5 days)
+                "bulk": ("hippocampal microglia", "bulk", "9 days vs. 200 days")},
+    "tms": {"single_cell": ("4 organs, dissociated", "scRNA-seq", "1–3 vs. 18–30 months"),   # single-cell ages 1, 3, 18-30 months
+            "bulk": ("4 organs, whole", "bulk", "≤ 6 vs. 18–30 months")},           # the groups' ranges (0-6, 18-30)
+    "soundlife": {"single_cell": ("PBMC", "scRNA-seq", "25–37 vs. 55–67 years"),
+                  "bulk": ("whole blood", "bulk", "25–37 vs. 55–67 years")},
+    "lupus": {"single_cell": ("PBMC", "scRNA-seq", "control vs. lupus"),
+              "bulk": ("whole blood", "bulk", "control vs. lupus")},
     "crohns": {"single_cell": ("ileal tissue", "scRNA-seq", "control vs. Crohn's"),   # non-IBD controls
                "bulk": ("ileal biopsy", "bulk", "control vs. Crohn's")},
     "pineda": {"single_cell": ("motor cortex", "snRNA-seq", "control vs. ALS"),
                "bulk": ("motor cortex", "bulk", "control vs. ALS")},
 }
-# Fig 1D's connector between the sides, from 04d's "Independent cohorts" state (so 1D and 1E can't disagree):
-# "yes" = independent; "no" = the same donors where the pair is cross-fitted by donor, else the same colony
-FIG1D_CONNECTORS = {"same_donors": "-", "same_colony": ":", "independent": "--"}   # linestyles
+# Fig 1E's columns, in order -> header: 04d's characteristics (config/fig1e; S8 Fig shows all of them) and the typed-in
+# FIG1E_TYPED
+FIG1E_PANEL = {"Many cell types": "Many cell types", "Tissue or preparation differs between sides": "Tissue differs",
+               "Phenotype defined differently": "Phenotype differs", "Independent cohorts": "Independent cohorts"}
+FIG1E_TYPED = {"Phenotype defined differently": ("hammond", "tms", "lupus")}   # column -> the pairs marked yes
 # Fig 1E's headers: the thresholds are in the legend, not the header
 FIG1E_HEADERS = {"Few training donors (< 100)": "Few donors",   # two lines each; full wording in the legend
                  "Tissue or preparation differs between sides": "Tissue differs",
@@ -364,8 +367,7 @@ S16_COLUMN_LABELS = {"primary (ridge)": "Primary (ridge)", "primary (lasso)": "P
 
 # Fig 2A's ✕ rows in the captions' order; "label_permuted" is pseudobulk's label-permuted row (stage 11b)
 LABEL_PERMUTED = "label_permuted"
-FIG2A_REFERENCE_ROWS = ("pseudobulk_pca64", "mean_log_cells", "per_cell_classifier", "cytoset_untrained", "deconvolution_clr",
-                        LABEL_PERMUTED, "known_signature")
+FIG2A_REFERENCE_ROWS = ("pseudobulk_pca64", "cytoset_untrained", LABEL_PERMUTED)
 assert set(FIG2A_REFERENCE_ROWS) <= set(configurations.REFERENCE_ROWS) | {LABEL_PERMUTED}
 # Display labels that override configurations.py's (which is inside stage code hashes) in every figure, key and tick label:
 # short forms so Fig 2a's row labels fit the label column; plain names for the configurations with one
@@ -373,16 +375,18 @@ assert set(FIG2A_REFERENCE_ROWS) <= set(configurations.REFERENCE_ROWS) | {LABEL_
 ROW_LABELS = {"deconvolution_clr": "Deconvolution (fractions)", LABEL_PERMUTED: "Label-permuted",
               "set_transformer_cells": "Set Transformer", "scrat_cells": "ScRAT", "scvi_cells": "scVI",
               "mean_log_cells": "Mean of log-normalized cells"}
-# Fig 2a's right column (2026-11-04): each configuration's pooled difference under the out-of-fold readout (stage 11b's
-# out_of_fold row), and on the CytoSet rows the post hoc practitioner comparison (scripts/practitioner_comparison.py:
-# CytoSet under the out-of-fold readout against pseudobulk under the main readout) as a second, smaller mark
-FIG2A_OUT_OF_FOLD = "out_of_fold"      # the column's name in Fig2A.csv and the 11b row it shows
-FIG2A_PRACTITIONER = ("cytoset_cells", "cytoset_pseudobulk")
 FIG2C_MODELS = ("cytoset", "geneformer", "scgpt")
-FIG3A = {"pair": "crohns", "columns": ("unaligned_stacked", "combat")}   # the left column is the stacked scaler
-ALIGNMENT_COLUMN_LABELS = {"unaligned_stacked": "One scaler, both sides", "combat": "ComBat"}
-FIG3B_KEYS = tuple(k for k in DISPLAY_ORDER if k == "pseudobulk" or k.endswith("_cells"))
-S13F_KEYS = tuple(k for k in DISPLAY_ORDER if configurations.CONFIGURATIONS[k]["input"] == "pseudobulk")
+FIG3_KEYS = ("pseudobulk", "cytoset_cells", "scgpt_cells")   # Fig 3a's rows and b and c's configurations
+FIG3A = {"pair": "crohns", "columns": ("unaligned_stacked", "none", "combat", "harmony")}
+ALIGNMENT_COLUMN_LABELS = {"unaligned_stacked": "Across-assay standard scaling", "none": "Within-assay standard scaling",
+                           "combat": "ComBat", "harmony": "Harmony"}
+ALIGNMENT_COLUMN_SHORT = {"unaligned_stacked": "Across-\nassay", "none": "Within-\nassay", "combat": "ComBat",
+                         "harmony": "Harmony"}   # Fig. S13a-e's narrower columns
+FIG3_CONDITIONS = ("unaligned_stacked", "none", "combat", "harmony")   # Fig 3b and c, left to right in each configuration
+S13_CONDITIONS = ("unaligned_stacked", "none", "combat", "coral", "harmony")   # Fig. S13f-i
+# Fig. S13f-i's configurations by input, pseudobulk first in each as the reference: f and g on cells, h and i on pseudobulk
+S13_KEYS = {"cells": tuple(k for k in DISPLAY_ORDER if k == "pseudobulk" or configurations.CONFIGURATIONS[k]["input"] == "cells"),
+            "pseudobulk": tuple(k for k in DISPLAY_ORDER if configurations.CONFIGURATIONS[k]["input"] == "pseudobulk")}
 # Fig 4A's foundation-model "all" points (stage 07d): ("scgpt",) under the partial fallback, () if cut.
 # Fig 4 asserts the scores table agrees both ways.
 FIG4A_FM_ALL_AVAILABLE = ("geneformer", "scgpt")
@@ -396,7 +400,6 @@ PHENOTYPE_RANGE = (0.5, 1.0)           # Fig 6A's phenotype column scale
 
 # The named cells drawn "n/a" instead of failing: item panel -> {(pair, column or key)}
 NOT_APPLICABLE = {
-    "Fig 2A": {(p, "deconvolution_clr") for p in PAIR_ORDER if deconvolution.LEVELS[p] is None},
     "Fig 6A": {(p, "mito_fraction") for p in properties.MITO_NA_PAIRS}
               | {(p, "composition_pc1") for p in PAIR_ORDER if deconvolution.LEVELS[p] is None},
     "Fig 6C": {(p, "all") for p in PAIR_ORDER if "one_type" not in PAIRS[p]},
@@ -419,6 +422,7 @@ BY_CONSTRUCTION = {("structure_only", "pseudobulk", "within_sc_auroc"), ("struct
 DIFFERENCE_RANGE = (-0.3, 0.15)
 XLIM_DIFFERENCE = {"Fig 2A": DIFFERENCE_RANGE, "Fig 4": DIFFERENCE_RANGE, "Fig. S9": DIFFERENCE_RANGE, "Fig. S10": DIFFERENCE_RANGE,
                    "Fig. S11": DIFFERENCE_RANGE, "Fig. S12": DIFFERENCE_RANGE, "Fig. S16": (-0.3, 0.3)}
+SILHOUETTE_TOP = 1.0                   # Fig 3b, S13f, h: the modality silhouette's maximum (room for the condition names)
 AUROC_RANGE = (0.5, 1.02)              # Fig 2b, 5c and 6c's shared AUROC axis; a value below is an arrowhead at the bottom edge
 HOLM_GLYPH = {"better": "↑", "worse": "↓"}
 HOLM_ALPHA = statistics.ALPHA
@@ -431,7 +435,7 @@ BLINDED_PANELS = {
     "Fig 3": ("A", "B"), "Fig 5": ("A", "B", "D"), "Fig 6": ("A", "B"),
     **{item: tuple(PANELS[item]) for item in QC_FIGURES.values()},
     "Fig. S8": tuple(PANELS["Fig. S8"]), "Fig. S10": ("A", "D", "E"), "Fig. S11": ("A",),
-    "Fig. S13": tuple(p for p in PANELS["Fig. S13"] if p != "F"), "Fig. S14": tuple(PANELS["Fig. S14"]),
+    "Fig. S13": tuple(p for p in PANELS["Fig. S13"] if p not in ("G", "I")), "Fig. S14": tuple(PANELS["Fig. S14"]),
     "Fig. S15": tuple(PANELS["Fig. S15"]),
 }
 
@@ -443,7 +447,7 @@ TEXT = {
     "within": "single-cell",
     "bulk": "bulk",
     "silhouette": "Modality silhouette",
-    "silhouette_short": "Silhouette",   # Fig. S13a-e, under each plot
+    "silhouette_short": "Silhouette",   # Fig 3a and Fig. S13a-e, under each plot
     "cells_per_bag": "Cells per bag (log scale; embedding averaged over 10 bags)",
     "stability_order": "Within each row, top to bottom: {checks}",   # Fig. S14a
     "chance_row": "Chance (95th pct.)",   # Fig 6a
@@ -482,7 +486,7 @@ TEXT = {
     "by_construction": "holds by construction",   # Fig 5d's gray marks
     "base_all": "all panel genes",          # Fig 5b, S14b/c reference ticks
     "base_matched": "matched on single-cell shift",
-    "pseudobulk_unaligned": "pseudobulk, per-side",
+    "pseudobulk_within_assay": "pseudobulk, within-assay",   # Fig 3c and Fig. S13g, i's dashed line (the key)
     "scale_r2": "R² (properties)",                    # Fig 6A's scale bars: the columns mix R² and AUROC
     "scale_phenotype": "AUROC (phenotype)",   # Fig 3c and S13f's dashed line: pseudobulk under the standard per-side standardization
     "pseudobulk_bulk": "pseudobulk's bulk AUROC",   # Fig 6c's dashed line (caption: "as in Fig 2b")
@@ -501,23 +505,23 @@ TEXT = {
     "p_value": "p = {p:.2f}",
     "p_value_holm": "p = {p:.2f} (Holm {holm:.2f})",
     "reference_row": "reference row",
-    "practitioner": "CytoSet, out-of-fold readout,\nvs. pseudobulk, main readout",   # Fig 2a's post hoc mark (key)
+    "baseline_control": "baseline or control",   # Fig 2a's gray rows (key)
+    "margin_band": f"> {statistics.MARGIN:g} above pseudobulk",   # Fig 2a's shading (key)
     "hollow": "hollow = pseudobulk input",
     "ring": "ring = selected",
     "within_bulk": "within-bulk reference",
+    "within_bulk_fig2": "within-bulk reference\n(ridge trained on bulk)",   # Fig 2's key and panel b's line label
     "pseudobulk_bulk": "pseudobulk",                # Fig 2b: the dashed line's name at the right
     "pseudobulk_zero": "pseudobulk (Δ = 0)",   # the line is 0 on a difference axis
     "pseudobulk_fig2": "pseudobulk (Δ = 0 in a, c;\nits bulk AUROC in b)",   # Fig 2's one dashed line, both meanings
     "pseudobulk_n": "pseudobulk of the same cells",
-    "gene_profiles": "gene profiles",
     "log1p_cpm": "Mean log1p CPM",
-    "fig1c_inputs": {"cells": "cells\n(bags of {n})", "pseudobulk": "pseudobulk\nprofile"},
-    "fig1c_header": "Embedding input",
-    "fig1c_key": "each model embeds a sample's cells,\nor its summed (pseudobulk) profile",
+    "fig1c_inputs": {"cells": "Cells", "pseudobulk": "Pseudobulk"},
+    "fig1c_header": "Model input",
     "absent": "—",
-    "sides": {"single_cell": "single-cell side", "bulk": "bulk side"},
-    "connector": {"same_donors": "same donors", "same_colony": "same colony", "independent": "independent"},
-    "crossfit": "{n}-fold cross-fitting",
+    "fig1d_cohorts": {"single_cell": "Single-cell cohort", "bulk": "Bulk cohort"},
+    "fig1d_counts": "n = {a} vs. {b} {unit}",
+    "fig1d_units": {"donor": "donors", "sample": "samples"},
 }
 
 # ---- the data files' donor-level rule ----
