@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.gridspec import GridSpecFromSubplotSpec
-from matplotlib.transforms import ScaledTranslation
+from matplotlib.lines import Line2D
+from matplotlib.transforms import ScaledTranslation, blended_transform_factory
 
 import common
 import plots
@@ -39,10 +40,42 @@ REFERENCE_GAP = 1.0                    # A: extra rows' space between the config
 # Panel letters (x, top) in mm: at the figure's left edge, each level with the top line of its panel's column titles
 LETTERS = {"A": (0.5, 16.9), "B": (0.5, 86.2), "C": (0.5, 127.5)}
 WITHIN_LABEL_SHIFT_PT = 3.6             # B: "single-cell" nudged right, so it clears the column before's "bulk" as well as its own
+INPUT_KEY_MM = 7.0                     # B, C: the model-input key's left edge (mm from the figure's left), just right of the letter
+INPUT_KEY_COLOR = "#4d4d4d"            # its markers: neutral, the shapes alone carry the meaning
 
 def column_header(ax, column):
     """A column's title: a pair's three-line title (♦ if pooled; common.stacked_title), or the pooled header."""
     ax.set_title(common.stacked_title(column, mark=True) if column in PAIRS else common.pooled_header(), fontsize=F.FIG2_FONT_SIZE)
+
+
+def input_key(fig, ax):
+    """The model-input key left of the first column title, its lines on the title's baselines: "Model input:", then
+    pseudobulk with the open marker and cells with the filled one (config/style.HOLLOW_MARKER, MARKER_EDGE), in neutral gray."""
+    size = F.FIG2_FONT_SIZE
+    renderer = fig.canvas.get_renderer()
+    probe = ax.text(0, 0, "A\nA", fontsize=size)   # the titles' line pitch: a two-line text's height less a one-line text's
+    two = probe.get_window_extent(renderer).height
+    probe.set_text("A")
+    step = (two - probe.get_window_extent(renderer).height) * 72 / fig.dpi
+    probe.remove()
+    base = plt.rcParams["axes.titlepad"]
+    at = blended_transform_factory(fig.transFigure, ax.transAxes)
+    x = INPUT_KEY_MM / 25.4 / fig.get_size_inches()[0]
+    heading, open_input, filled_input = F.TEXT["model_input"]
+    hollow = {"markerfacecolor": S.HOLLOW_MARKER["facecolor"], "markeredgewidth": S.HOLLOW_MARKER["linewidth"],
+              "markersize": S.MARKER_SIZE * S.HOLLOW_MARKER["size_factor"]}
+    filled = {"markerfacecolor": INPUT_KEY_COLOR, "markeredgewidth": S.MARKER_EDGE, "markersize": S.MARKER_SIZE}
+    write = lambda text, dx, dy: ax.annotate(text, (x, 1.0), xycoords=at, xytext=(dx, dy), textcoords="offset points", ha="left",
+                                             va="baseline", fontsize=size, annotation_clip=False)
+    write(heading, 0, base + 2 * step)
+    for k, (name, kwargs) in enumerate(((open_input, hollow), (filled_input, filled))):
+        dy = base + (1 - k) * step
+        start = write(f"{name} (", 0, dy)
+        width = start.get_window_extent(renderer).width * 72 / fig.dpi
+        middle = width + 0.6 + kwargs["markersize"] / 2
+        ax.add_artist(Line2D([x], [1.0], marker="o", markeredgecolor=INPUT_KEY_COLOR, linestyle="none", clip_on=False,
+                             transform=at + ScaledTranslation(middle / 72, (dy + 0.36 * size) / 72, fig.dpi_scale_trans), **kwargs))
+        write(")", middle + kwargs["markersize"] / 2 + 0.6, dy)
 
 
 def strip(fig, axes, columns) -> list:
@@ -227,6 +260,7 @@ def panel_b(fig, cell, pairs):
             ax.set_ylabel(F.TEXT["auroc"])
         else:
             ax.set_yticklabels([])
+    input_key(fig, axes[0])
     style.panel_label_mm(fig, "B", *LETTERS["B"])
     common.panel_csv(pd.DataFrame(csv), FIGURE, "B")
 
@@ -265,6 +299,7 @@ def panel_c(fig, cell, pairs):
         plots.rows_axis(ax, [configurations.MODELS[m]["label"] for m, _, _ in steps], i == 0)
         column_header(ax, column)
     plots.centered_xlabel(axes, F.TEXT["difference"])
+    input_key(fig, axes[0])
     style.panel_label_mm(fig, "C", *LETTERS["C"])
     common.panel_csv(pd.DataFrame(csv), FIGURE, "C")
 

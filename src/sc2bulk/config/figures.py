@@ -511,6 +511,7 @@ TEXT = {
     "ring": "ring = selected",
     "within_bulk": "within-bulk reference",
     "within_bulk_fig2": "within-bulk reference\n(ridge trained on bulk)",   # Fig 2's key and panel b's line label
+    "model_input": ("Model input:", "pseudobulk", "or cells"),   # Fig 2b, c: the open and filled markers' key, a marker after each input
     "pseudobulk_bulk": "pseudobulk",                # Fig 2b: the dashed line's name at the right
     "pseudobulk_zero": "pseudobulk (Δ = 0)",   # the line is 0 on a difference axis
     "pseudobulk_fig2": "pseudobulk (Δ = 0 in a, c;\nits bulk AUROC in b)",   # Fig 2's one dashed line, both meanings
