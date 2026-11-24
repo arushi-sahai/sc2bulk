@@ -1,7 +1,7 @@
 """Build the poster PDF (100 x 80 cm) from poster.html and the figure files, with headless Chrome.
 
-Each figure is taken as figures/FigN.svg if it exists, else figures/FigN.png. Writes sc2bulk_poster.pdf and a
-low-resolution preview, preview.png, next to this file."""
+Each figure is taken as figures/FigN.svg if it exists, else figures/FigN.png. Writes sc2bulk_poster.pdf, the
+web page's poster image (sc2bulk_poster.png) and its link-preview card (og.png) next to this file."""
 import html as html_lib
 import json
 import re
@@ -12,7 +12,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CHROME = "google-chrome"
 CM_TO_PX = 96 / 2.54                   # CSS pixels per cm
-PREVIEW_SCALE = 0.25                   # preview.png at a quarter of the 96-dpi page size
+IMAGE_WIDTH = 2400                     # sc2bulk_poster.png, the poster shown on the web page
+CARD = (1200, 630)                     # og.png, the top of the poster as a link-preview card
 
 
 def figure(n):
@@ -56,8 +57,11 @@ def main():
     built.write_text(html)
     subprocess.run([*common, "--no-pdf-header-footer", f"--print-to-pdf={HERE / 'sc2bulk_poster.pdf'}", built.as_uri()], check=True)
     width, height = round(100 * CM_TO_PX), round(80 * CM_TO_PX)
-    subprocess.run([*common, f"--force-device-scale-factor={PREVIEW_SCALE}", f"--window-size={width},{height}",
-                    f"--screenshot={HERE / 'preview.png'}", "--hide-scrollbars", built.as_uri()], check=True)
+    subprocess.run([*common, f"--force-device-scale-factor={IMAGE_WIDTH / width}", f"--window-size={width},{height}",
+                    f"--screenshot={HERE / 'sc2bulk_poster.png'}", "--hide-scrollbars", built.as_uri()], check=True)
+    built.write_text(f'<body style="margin:0"><img src="sc2bulk_poster.png" style="width:{CARD[0]}px;display:block"></body>')   # Chrome scales no lower than 0.5
+    subprocess.run([*common, f"--window-size={CARD[0]},{CARD[1]}", f"--screenshot={HERE / 'og.png'}", "--hide-scrollbars",
+                    built.as_uri()], check=True)
     built.unlink()
 
 

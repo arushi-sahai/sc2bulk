@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A benchmark of deep learning sample representations from scRNA-seq for predicting phenotypes in bulk RNA-seq cohorts</title>
+<meta name="description" content="Poster: no deep learning sample representation of single-cell samples predicted bulk phenotypes more accurately than pseudobulk, across six datasets of paired single-cell and bulk cohorts.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://arushi-sahai.github.io/sc2bulk/poster/">
+<meta property="og:title" content="A benchmark of deep learning sample representations from scRNA-seq for predicting phenotypes in bulk RNA-seq cohorts">
+<meta property="og:description" content="Poster: no deep learning sample representation of single-cell samples predicted bulk phenotypes more accurately than pseudobulk, across six datasets of paired single-cell and bulk cohorts.">
+<meta property="og:image" content="https://arushi-sahai.github.io/sc2bulk/poster/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The top of the poster: its title, authors, and the first part of each of the three columns.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Arushi Sahai">
+<style>
+  :root {
+    --bg: #ffffff; --surface: #f2f4f7; --ink: #1a1a1a; --ink-2: #4a4f57; --muted: #7a808a; --rule: #dfe3e8;
+    --navy: #1f4272; --band: #7bafd4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141518; --surface: #1d2026; --ink: #eef0f3; --ink-2: #c2c7cf; --muted: #8d939c; --rule: #333840; --navy: #9cc3e6; }
+  }
+  :root[data-theme="dark"] { --bg: #141518; --surface: #1d2026; --ink: #eef0f3; --ink-2: #c2c7cf; --muted: #8d939c; --rule: #333840; --navy: #9cc3e6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 Arial, "Liberation Sans", Helvetica, sans-serif; }
+  .band { height: 8px; background: var(--band); }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 72px; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 12px; color: var(--navy); }
+  h2 { font-size: 1.25rem; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--navy); }
+  p { color: var(--ink-2); max-width: 78ch; }
+  .authors { margin: 0 0 2px; color: var(--ink); }
+  .affil { margin: 0 0 14px; font-size: 0.9rem; color: var(--muted); }
+  .venue { margin: 0 0 20px; color: var(--ink-2); }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 24px; }
+  .links a { display: inline-block; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--navy); color: var(--navy); text-decoration: none; font-weight: 600; }
+  .links a.primary { background: var(--navy); color: var(--bg); }
+  .links a:hover { text-decoration: underline; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 6px; background: #ffffff; }
+  figcaption { margin-top: 8px; font-size: 0.9rem; color: var(--muted); }
+  a { color: var(--navy); }
+</style>
+</head>
+<body>
+<div class="band"></div>
+<main>
+  <h1>A benchmark of deep learning sample representations from scRNA&#8209;seq for predicting phenotypes in bulk RNA&#8209;seq cohorts</h1>
+  <p class="authors">Arushi Sahai<sup>1</sup>, Beatriz Campillo<sup>3</sup>, Luvna Dhawka<sup>2,3</sup>, Natalie Stanley<sup>1,2,4</sup></p>
+  <p class="affil"><sup>1</sup>Department of Computer Science, <sup>2</sup>Computational Medicine Program, <sup>3</sup>Curriculum in Bioinformatics and Computational Biology, <sup>4</sup>Department of Genetics, The University of North Carolina at Chapel Hill</p>
+  <p class="venue">Poster at the Pacific Symposium on Biocomputing (PSB 2027, January 3–7, 2027) and Keystone Symposia (Banff, February 15–18, 2027).</p>
+  <div class="links">
+    <a class="primary" href="sc2bulk_poster.pdf">Poster (PDF)</a>
+    <a href="https://github.com/arushi-sahai/sc2bulk">Code</a>
+  </div>
+
+  <figure>
+    <a href="sc2bulk_poster.pdf"><img src="sc2bulk_poster.png" width="2400" height="1920" alt="The poster: an introduction and the benchmark design (Fig 1), the main comparison with pseudobulk (Fig 2), batch correction (Fig 3), conclusions, references, and acknowledgments."></a>
+    <figcaption>Select the poster to open the full-resolution PDF (100 × 80 cm).</figcaption>
+  </figure>
+
+  <h2>Abstract</h2>
+  <p>Phenotype models trained on single-cell RNA-seq capture cell-level biology, but single-cell cohorts are small. Applying such models to larger bulk RNA-seq cohorts, which often carry clinical outcomes, would allow the models to be validated and used at scale. Single-cell and bulk cohorts often differ in tissue preparation and originate from different individuals, so a model trained on single-cell samples may not generalize to bulk samples. The simplest representation of a single-cell sample is pseudobulk, a fixed sum of the sample's cells; deep learning models instead learn a nonlinear representation from the individual cells, and foundation models also add pretraining on millions of cells. We asked whether deep learning sample representations predict bulk phenotypes more accurately than pseudobulk.</p>
+  <p>We compared pseudobulk with nine deep learning representations from three model families: supervised set encoders (CytoSet, Set Transformer, and ScRAT), an unsupervised generative model (scVI), and frozen foundation models (Geneformer and scGPT). In six datasets of paired single-cell and bulk cohorts, spanning aging, lupus, Crohn's disease, and ALS, a ridge classifier was trained on representations of labeled single-cell samples, applied unchanged to bulk samples, and scored by bulk AUROC.</p>
+  <p>No deep learning representation significantly outperformed pseudobulk in any dataset. Averaged over the four datasets where pseudobulk's AUROC was below 0.95, leaving room for a 0.05 advantage, pseudobulk significantly outperformed seven of the nine representations by 0.08 to 0.27 AUROC and did not differ significantly from either CytoSet representation. Every representation predicted the phenotype accurately on held-out single-cell samples, so the deficit arose in the transfer to bulk samples. Batch correction with ComBat or Harmony did not improve transfer.</p>
+  <p>Pseudobulk, which requires no model training, tuning, or GPUs, matched or outperformed every representation tested, establishing pseudobulk as the baseline any new deep learning representation must outperform. The benchmark and code are public at <a href="https://github.com/arushi-sahai/sc2bulk">github.com/arushi-sahai/sc2bulk</a>.</p>
+
+  <h2>Contact</h2>
+  <p>Arushi Sahai, <a href="mailto:arushis@cs.unc.edu">arushis@cs.unc.edu</a></p>
+</main>
+</body>
+</html>
